@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — Form Verval Lapangan (CMS Mobile)</title>
+<meta name="proto:desc" content="Form verifikasi lapangan (CMS mobile)">
+<meta name="proto:date" content="2026-10-26">
+<meta name="proto:tags" content="verval,mobile,form">
+<style>
+  :root {
+    --green-600: #16A75C;
+    --green-700: #069550;
+    --green-50: #E8F6EE;
+    --bg: #EDEFF3;
+    --card: #fff;
+    --border: #E0E3E8;
+    --text: #1F2937;
+    --muted: #6B7280;
+    --red: #F44336;
+    --red-50: #FFEBEE;
+    --amber-50: #FFF8E1;
+    --amber: #B26A00;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d9dce2; font-family: Lato, Roboto, system-ui, sans-serif; color: var(--text); }
+  .phone { max-width: 430px; min-height: 100vh; margin: 0 auto; background: var(--bg); position: relative; display: flex; flex-direction: column; }
+  @media (min-width: 640px) { .phone { margin: 24px auto; min-height: 800px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,.2); } }
+  .proto-note { font-size: 11px; background: #333; color: #fff; padding: 6px 12px; text-align: center; }
+  .proto-note button { background: none; border: 1px solid #888; color: #fff; border-radius: 4px; font-size: 11px; padding: 2px 6px; cursor: pointer; margin-left: 4px; }
+
+  /* top bar */
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--green-600); color: #fff; display: flex; align-items: center; gap: 8px; padding: 12px 12px; }
+  .topbar .back { background: rgba(255,255,255,.18); border: 0; color: #fff; width: 40px; height: 40px; border-radius: 10px; font-size: 20px; cursor: pointer; }
+  .topbar .t { flex: 1; min-width: 0; }
+  .topbar .t b { display: block; font-size: 15px; }
+  .topbar .t span { font-size: 12px; opacity: .9; }
+
+  .screen { display: none; flex: 1; flex-direction: column; }
+  .screen.active { display: flex; }
+  .body { padding: 12px; flex: 1; padding-bottom: 24px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 8px; font-size: 14px; }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  .kv.one { grid-template-columns: 1fr; }
+  .kv small { display: block; color: var(--muted); font-size: 11px; }
+  .kv b { font-size: 13px; word-break: break-word; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--green-50); color: var(--green-700); }
+  .badge.warn { background: var(--amber-50); color: var(--amber); }
+
+  /* stepper — pola super-app-web: lingkaran 32px + judul + chevron; state selesai (centang) tambahan */
+  .stepper { display: flex; align-items: center; gap: 4px; background: #fff; padding: 12px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .stepper::-webkit-scrollbar { display: none; }
+  .step { display: flex; align-items: center; gap: 8px; flex: none; font-size: 14px; color: #757575; font-family: Roboto, Lato, sans-serif; }
+  .step i { font-style: normal; width: 32px; height: 32px; flex: none; border-radius: 50%; background: #EEEEEE; color: #757575; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .step span { white-space: nowrap; }
+  .step.active { color: #000; }
+  .step.active i { background: var(--green-600); color: #fff; }
+  .step.done { color: var(--green-700); }
+  .step.done i { background: var(--green-700); color: #fff; }
+  .sep { color: #BDBDBD; flex: none; width: 20px; text-align: center; }
+
+  /* tombol aksi inline di akhir kartu — pola super-app-web (mobile: primary di atas, Kembali di bawah, full-width) */
+  .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 16px; }
+  .actions .btn { flex: none; width: 100%; }
+
+  /* photo slots */
+  .banner { background: var(--amber-50); border-left: 4px solid #F5A623; padding: 8px 10px; border-radius: 6px; font-size: 12px; color: var(--amber); margin-bottom: 12px; }
+  .slot { display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: center; }
+  .slot .pic { width: 88px; height: 88px; border: 2px dashed #C5CAD3; border-radius: 10px; display: grid; place-items: center; color: #9AA1AD; font-size: 24px; cursor: pointer; background-size: cover; background-position: center; position: relative; }
+  .slot .pic.has { border-style: solid; border-color: var(--green-600); color: transparent; }
+  .slot .pic.err { border-color: var(--red); }
+  .slot .pic small { position: absolute; bottom: 4px; font-size: 10px; color: var(--muted); }
+  .slot .pic.has small { display: none; }
+  .slot h4 { margin: 0; font-size: 13px; }
+  .slot p { margin: 2px 0 6px; font-size: 12px; color: var(--muted); }
+  .slot .acts { display: flex; gap: 6px; }
+  .link { background: none; border: 0; color: var(--green-700); font-weight: 700; font-size: 12px; padding: 8px 0; cursor: pointer; min-height: 36px; }
+  .link.red { color: var(--red); }
+  .progress-line { font-size: 12px; font-weight: 700; margin: 0 0 10px; }
+
+  /* indicator cards */
+  .cat { font-size: 12px; font-weight: 800; letter-spacing: .04em; color: var(--green-700); margin: 14px 0 0; padding: 6px 10px; background: var(--green-50); border-radius: 6px; text-transform: uppercase; }
+  .ind { padding: 12px 0; border-top: 1px solid #F0F1F4; }
+  .cat + .ind { border-top: 0; }
+  .ind .top { display: flex; gap: 8px; margin-bottom: 8px; }
+  .ind .no { width: 24px; height: 24px; flex: none; border-radius: 6px; background: #EEE; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .ind h4 { margin: 0; font-size: 13px; }
+  .ind .std { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seg label { border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; background: #fff; }
+  .seg input { display: none; }
+  .seg label.good.on { background: var(--green-50); border-color: var(--green-600); color: var(--green-700); }
+  .seg label.bad.on { background: var(--red-50); border-color: var(--red); color: #C62828; }
+  .ind.missing { border-color: var(--red); }
+  .ind textarea { width: 100%; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; resize: vertical; min-height: 56px; }
+  .ind .miss-msg { color: var(--red); font-size: 11px; margin-top: 6px; display: none; }
+  .ind.missing .miss-msg { display: block; }
+
+  /* summary */
+  .stat { display: flex; gap: 8px; }
+  .stat div { flex: 1; text-align: center; border-radius: 10px; padding: 10px 4px; background: var(--green-50); }
+  .stat div.bad { background: var(--red-50); }
+  .stat b { font-size: 22px; display: block; }
+  .stat small { font-size: 11px; color: var(--muted); }
+  textarea.notes { width: 100%; min-height: 110px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font: inherit; font-size: 14px; }
+  .counter { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .err-text { color: var(--red); font-size: 12px; margin-top: 4px; display: none; }
+  .err-text.show { display: block; }
+  .thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+  .thumbs span { aspect-ratio: 1; border-radius: 6px; background: #ddd center/cover; }
+  .rows .r { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #F0F1F4; font-size: 12px; }
+  .rows .r:last-child { border: 0; }
+  .rows .r b.b { color: #C62828; }
+  .rows .r b.g { color: var(--green-700); }
+
+  /* bottom bars */
+  .bar { position: sticky; bottom: 0; z-index: 20; background: #fff; border-top: 1px solid var(--border); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; margin-top: auto; }
+  .btn { flex: 1; min-height: 46px; border-radius: 10px; border: 1.5px solid var(--green-700); background: var(--green-700); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn.sec { background: #fff; color: var(--green-700); flex: 0 0 38%; }
+  .btn.ghost { flex: 0 0 48px; background: #fff; color: var(--text); border-color: var(--border); font-size: 20px; position: relative; }
+  .btn:disabled { background: #E0E0E0; border-color: #E0E0E0; color: #8a8a8a; cursor: not-allowed; }
+  .menu { position: absolute; bottom: 56px; left: 0; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); min-width: 160px; display: none; text-align: left; overflow: hidden; }
+  .menu.show { display: block; }
+  .menu button { display: block; width: 100%; text-align: left; padding: 12px 14px; border: 0; background: #fff; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .menu button:hover { background: #F5F6F8; }
+  .menu .danger { color: var(--red); }
+
+  .lrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #F0F1F4; font-size: 13px; }
+  .lrow:last-child { border: 0; }
+  .lrow small { color: var(--muted); }
+  .fld { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; font: inherit; font-size: 14px; background: #fff; }
+  .fld[readonly], .fld:disabled { background: #F3F4F6; color: #555; cursor: not-allowed; }
+  .fld.err { border-color: var(--red); }
+  .fl { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+  .fl:first-child { margin-top: 0; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .rp { position: relative; } .rp b { position: absolute; left: 12px; top: 8px; font-size: 14px; color: var(--muted); } .rp .fld { padding-left: 38px; }
+  .callout { background: #F9FBFC; border: 1px solid #EFF1F3; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #374151; margin-bottom: 12px; line-height: 1.45; }
+  .callout.green { background: var(--green-50); border-color: #BFE5CF; color: var(--green-700); }
+  .callout.amber { background: var(--amber-50); border-color: #F5D58A; color: var(--amber); }
+  .callout b.t { display: block; font-size: 13px; margin-bottom: 2px; }
+  .sechead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .sechead h3 { margin: 0; }
+  .cnt { font-size: 11px; font-weight: 700; background: var(--green-50); color: var(--green-700); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+  .keyfoto { height: 150px; border-radius: 10px; background: #DDE1E7 center/cover; display: grid; place-items: center; color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .okbanner { background: var(--green-50); border: 1px solid #BFE5CF; color: var(--green-700); font-size: 12px; font-weight: 700; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; }
+  /* dialog — meniru komponen CMS: BaseDialog + Panel + Header + Description + Footer */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .overlay.show { display: flex; }
+  .dlg { background: #fff; border-radius: 8px; width: 100%; max-width: 430px; overflow: hidden; font-family: Lato, Roboto, system-ui, sans-serif; }
+  .dlg .hd { padding: 8px 24px; }
+  .dlg .hd h1 { margin: 12px 0 0; font: 700 21px Roboto, Lato, sans-serif; color: #008444; }
+  .dlg .bd { padding: 24px; font-size: 14px; color: #424242; }
+  .dlg .bd.info { display: flex; align-items: center; gap: 12px; padding: 16px 24px 40px; }
+  .dlg .bd.info svg { flex: none; }
+  .dlg .ft { background: #FAFAFA; padding: 16px 24px; display: flex; justify-content: flex-end; gap: 16px; }
+  .dlg .ft.center { justify-content: center; }
+  .dlg .ft button { min-height: 38px; padding: 9px 16px; border-radius: 8px; font: 700 14px Lato, Roboto, sans-serif; cursor: pointer; border: 1.5px solid #069550; background: #069550; color: #fff; }
+  .dlg .ft button.sec { background: #fff; color: #008444; border-color: #008444; }
+  .btn.rej { background: #fff; color: #DC2626; border-color: #FECACA; }
+  .dlg .bd label { display: block; font-size: 14px; font-weight: 700; margin: 0 0 4px; }
+  .dlg .bd select, .dlg .bd textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 14px; background: #fff; }
+  .dlg .bd select { height: 36px; padding: 0 12px; }
+  .dlg .bd textarea { min-height: 90px; resize: vertical; }
+  .dlg .bd .fe { color: #DD5E5E; font-size: 12px; margin-top: 4px; display: none; }
+  .dlg .bd .fe.show { display: block; }
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+  <!-- ===== SCREEN 2: FORM VERVAL ===== -->
+  <section class="screen active" id="s-form">
+    <div class="topbar">
+      <button class="back" onclick="showInfo('Kembali ke Detail','Di fitur nyata tombol ini membawa kembali ke detail usulan. (mock)','Tutup')" aria-label="Kembali ke detail">‹</button>
+      <div class="t"><b>Verval Lapangan</b><span>IMA-2026-001234</span></div>
+    </div>
+    <div class="stepper" id="stepper"></div>
+
+    <div class="body">
+      <!-- step 1: data diri -->
+      <div class="step-pane" id="p1">
+        <div class="card">
+          <h3>Data Diri Penerima Manfaat</h3>
+          <div class="hint" style="margin-bottom:10px">Terisi otomatis dari usulan. Koreksi bila hasil lapangan berbeda.</div>
+          <div class="okbanner">✔ Dukcapil Terverifikasi</div>
+          <label class="fl">Nomor KTP / NIK</label>
+          <input class="fld" id="d_nik" value="3277********0003" readonly>
+          <div class="hint">16 digit. Tidak dapat diubah.</div>
+          <label class="fl">Nama Penerima Manfaat <span style="color:var(--red)">*</span></label>
+          <input class="fld" id="d_nama" value="Kus****** Per****">
+          <label class="fl">Penghasilan per Bulan <span style="color:var(--red)">*</span></label>
+          <div class="rp"><b>Rp</b><input class="fld" id="d_gaji" value="1.250.000" inputmode="numeric" oninput="fmtRp(this)"></div>
+          <label class="fl">Nomor HP / WhatsApp <span style="color:var(--red)">*</span></label>
+          <input class="fld" id="d_hp" value="0812****2190" inputmode="tel">
+          <label class="fl">Alamat Lengkap Rumah <span style="color:var(--red)">*</span></label>
+          <textarea class="fld" id="d_alamat" style="height:80px;padding:10px;resize:vertical">Kp. ****** *******, RT ** / RW **</textarea>
+          <label class="fl">Kabupaten / Kota</label>
+          <input class="fld" value="Kota Bandung" disabled>
+          <label class="fl">Kecamatan</label>
+          <input class="fld" value="Bojongloa Kidul" disabled>
+          <label class="fl">Kelurahan</label>
+          <input class="fld" value="Cibaduyut" disabled>
+        </div>
+        <div class="card">
+          <h3>Berkas Dokumen Pendukung <span style="color:var(--red)">*</span></h3>
+          <div class="hint" style="margin:-4px 0 10px">Foto dokumen di lapangan. Format .jpg .jpeg .png · maks 5 MB per berkas.</div>
+          <div id="docs"></div>
+          <div class="callout green" style="margin:0">Data calon penerima telah disinkronkan dengan basis data pendaftaran Sipadek &amp; Sapawarga Jabar. Pastikan validasi fisik saat pengecekan lapangan sesuai.</div>
+        </div>
+      </div>
+
+      <!-- step 2: foto -->
+      <div class="step-pane" id="p2" style="display:none">
+        <div class="banner">Format .jpg .jpeg .png · maks 5 MB per foto. Semua 9 foto wajib diisi.</div>
+        <p class="progress-line" id="photoProgress">Foto terunggah: 0 / 9</p>
+        <div id="slots"></div>
+      </div>
+
+      <!-- step 3: penilaian lapangan -->
+      <div class="step-pane" id="p3" style="display:none">
+        <div class="card">
+          <h3>Bagian A — Ringkasan Objek Penilaian</h3>
+          <div class="kv one">
+            <div><small>Nomor Induk Kependudukan (NIK)</small><b id="a_nik"></b></div>
+            <div><small>Nama Calon Penerima Manfaat</small><b id="a_nama"></b></div>
+            <div><small>Penghasilan Rata-Rata Bulanan</small><b id="a_gaji" style="color:var(--green-700)"></b></div>
+            <div><small>Status Kepemilikan Lahan</small><b>Milik Sendiri (Surat Desa)</b></div>
+            <div><small>Alamat Domisili Fisik</small><b id="a_alamat"></b></div>
+          </div>
+          <div class="keyfoto" id="a_foto">Foto utama belum diunggah</div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px"><span>Foto 01: Perspektif 45°</span><a class="link" style="padding:0;min-height:0" href="#" onclick="zoomMain();return false">Perbesar</a></div>
+        </div>
+        <div class="card">
+          <h3>Bagian B — Tabel Penilaian Kondisi Rumah Fisik</h3>
+          <div id="inds"></div>
+        </div>
+        <div class="card">
+          <h3>Bagian C — Catatan Penilaian Teknis Fasilitator Lapangan <span style="color:var(--red)">*</span></h3>
+          <div class="hint" style="margin:-4px 0 8px">Keterangan tambahan hasil verifikasi lapangan (wajib diisi sesuai fakta observasi).</div>
+          <textarea class="notes" id="notes" maxlength="255" placeholder="Tuliskan catatan hasil verifikasi lapangan..." oninput="onNotes()"></textarea>
+          <div class="counter" id="counter">Tersisa 255 karakter</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="btnNext" onclick="next()">Lanjutkan</button>
+        <button class="btn rej" onclick="openReject()">Ditolak/Dialihkan</button>
+        <button class="btn sec" id="btnBack" onclick="prev()">Kembali</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- dialog konfirmasi (pola DialogConfirmation CMS) -->
+<div class="overlay" id="confirm">
+  <div class="dlg">
+    <div class="hd"><h1>Kirim Hasil Verval?</h1></div>
+    <div class="bd">Setelah dikirim, usulan berstatus Lolos Verval Lapangan dan data tidak bisa diubah.</div>
+    <div class="ft">
+      <button class="sec" onclick="closeConfirm()">Batalkan</button>
+      <button onclick="submitForm()">Iya, Kirim</button>
+    </div>
+  </div>
+</div>
+<!-- dialog Ditolak/Dialihkan (pola Dialog/VerifikasiLapangan CMS) -->
+<div class="overlay" id="reject">
+  <div class="dlg">
+    <div class="hd"><h1 id="rjTitle">Ditolak/Dialihkan</h1></div>
+    <div class="bd">
+      <label>Jenis <span style="color:#DD5E5E">*</span></label>
+      <select id="rjJenis" onchange="rjChange()">
+        <option value="">Pilih jenis</option>
+        <option value="rejected_field">Ditolak</option>
+        <option value="diverted_field">Dialihkan</option>
+      </select>
+      <div class="fe" id="rjJenisErr">Jenis wajib dipilih</div>
+      <label style="margin-top:16px">Catatan <span style="color:#DD5E5E">*</span></label>
+      <textarea id="rjNote" maxlength="255" oninput="rjCount()" placeholder="Tuliskan catatan hasil verifikasi lapangan..."></textarea>
+      <div class="fe" id="rjNoteErr">Catatan wajib diisi</div>
+      <div class="counter" id="rjCounter">Tersisa 255 Karakter</div>
+    </div>
+    <div class="ft">
+      <button class="sec" onclick="closeReject()">Batalkan</button>
+      <button id="rjSubmit" onclick="submitReject()">Kirim</button>
+    </div>
+  </div>
+</div>
+<!-- dialog informasi (pola DialogInformation CMS) -->
+<div class="overlay" id="info">
+  <div class="dlg">
+    <div class="hd"><h1 id="inTitle"></h1></div>
+    <div class="bd info">
+      <svg id="inIcon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#069550"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><span id="inMsg"></span><br><small id="inSub" style="color:var(--muted)"></small></span>
+    </div>
+    <div class="ft center"><button id="inBtn" onclick="closeInfo()">Tutup</button></div>
+  </div>
+</div>
+<input type="file" id="fileIn" accept="image/jpeg,image/png" hidden>
+
+<script>
+const PHOTOS = [
+  ['Perspektif 45°', 'Tampak serong 45° keseluruhan bangunan', true],
+  ['Tampak Depan', 'Fasad depan tegak lurus pintu utama'],
+  ['Tampak Samping', 'Dinding samping dan talang atap rumah'],
+  ['Tampak Belakang', 'Dinding belakang atau batas area tanah'],
+  ['Ruang Keluarga', 'Area berkumpul dan ketinggian plafon'],
+  ['MCK / Jamban', 'Sanitasi, kloset jongkok, dan bak air'],
+  ['Kamar Tidur', 'Ruang istirahat dan luas lantai tidur'],
+  ['Dapur', 'Area memasak dan ketersediaan air'],
+  ['Ruang yang Direhab', 'Fokus titik prioritas kerusakan berat'],
+];
+// label sama dengan FIELD_VERIFICATION_DOCUMENTS (constant/imah-aing.js); gambar saja
+const DOCS = [
+  ['Surat Keterangan Miskin/Tidak Mampu', 'Foto surat keterangan tidak mampu resmi, bertanda tangan & cap RT/RW setempat.'],
+  ['Kartu Keluarga', 'Foto Kartu Keluarga terbaru yang jelas dan terbaca.'],
+  ['Surat Keterangan Kepemilikan Tanah', 'Foto Sertifikat Hak Milik (SHM) / Girik / Surat Keterangan Riwayat Tanah dari Desa/Kelurahan.'],
+];
+const MAX_MB = 5;
+// [cat, no, label, standar, goodLabel, badLabel]
+const INDS = [
+  ['I. Keselamatan Bangunan — Struktural', 1, 'Pondasi Rumah', '', 'Tidak Rusak', 'Rusak / Tidak Ada'],
+  ['', 2, 'Tiang / Kolom Penyangga', '', 'Tidak Rusak', 'Rusak / Tidak Ada'],
+  ['', 3, 'Balok Pengikat', '', 'Tidak Rusak', 'Rusak / Tidak Ada'],
+  ['', 4, 'Rangka Kuda-Kuda Atap', '', 'Tidak Rusak', 'Rusak / Tidak Ada'],
+  ['I. Keselamatan Bangunan — Nonstruktural', 5, 'Dinding Pengisi', '', 'Tidak Rusak', 'Rusak'],
+  ['', 6, 'Kusen Pintu & Jendela', '', 'Tidak Rusak', 'Rusak'],
+  ['', 7, 'Penutup Atap (Genteng)', '', 'Tidak Rusak', 'Rusak'],
+  ['', 8, 'Lantai Rumah', '', 'Tidak Rusak', 'Rusak / Tanah'],
+  ['II. Kecukupan Ruang', 9, 'Standar Luas Min. 7,2 m² / Jiwa', '', 'Cukup', 'Tidak Cukup'],
+  ['III. Kesehatan & Sanitasi', 10, 'Pencahayaan Alami (Min. 10% Luas Lantai)', '', 'Memenuhi', 'Tidak Memenuhi'],
+  ['', 11, 'Penghawaan & Sirkulasi Udara (Min. 5%)', '', 'Memenuhi', 'Tidak Memenuhi'],
+  ['', 12, 'Ketersediaan Sanitasi & MCK Sehat', '', 'Memenuhi', 'Tidak Memenuhi'],
+  ['IV. Kesanggupan Berswadaya Calon Penerima Manfaat', 13, 'Komitmen Kesanggupan Swadaya', '', 'Ada Swadaya', 'Tidak Ada'],
+];
+const STEPS = ['Data Diri', 'Foto (9)', 'Penilaian'];
+
+const state = { step: 1, photos: {}, answers: {}, notes: '' }; // photos: kunci p0..p8 (foto), d0..d2 (berkas)
+let pickKey = null;
+
+const $ = (id) => document.getElementById(id);
+
+function go(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('s-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'form') render();
+}
+function reset() {
+  Object.values(state.photos).forEach(p => URL.revokeObjectURL(p.url));
+  state.step = 1; state.photos = {}; state.answers = {}; state.notes = '';
+  $('notes').value = ''; $('counter').textContent = 'Tersisa 255 karakter';
+  go('form'); buildSlots(); buildInds();
+}
+
+/* ---------- foto (p0..p8) + berkas (d0..d2) ---------- */
+const slotKeys = () => [...PHOTOS.map((_, i) => 'p' + i), ...DOCS.map((_, i) => 'd' + i)];
+function slotHtml(k, title, desc, main) {
+  return `
+    <div class="card slot" id="slot-${k}">
+      <div class="pic" onclick="pick('${k}')" role="button" aria-label="Unggah ${title}">＋<small>Tambah</small></div>
+      <div>
+        <h4>${title} ${main ? '<span class="badge">Foto Utama</span>' : ''} <span style="color:var(--red)">*</span></h4>
+        <p>${desc}</p>
+        <div class="acts"></div>
+        <div class="err-text" id="err-${k}"></div>
+      </div>
+    </div>`;
+}
+function buildSlots() {
+  $('slots').innerHTML = PHOTOS.map((p, i) => slotHtml('p' + i, `${i + 1}. ${p[0]}`, p[1], p[2])).join('');
+  $('docs').innerHTML = DOCS.map((d, i) => slotHtml('d' + i, d[0], d[1], false)).join('');
+  slotKeys().forEach(paintSlot);
+}
+function pick(k) { pickKey = k; $('fileIn').click(); }
+$('fileIn').addEventListener('change', (e) => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f || pickKey === null) return;
+  const k = pickKey; const err = $('err-' + k);
+  if (!/^image\/(jpeg|png)$/.test(f.type)) { err.textContent = 'Format harus .jpg/.jpeg/.png'; err.classList.add('show'); return; }
+  if (f.size > MAX_MB * 1024 * 1024) { err.textContent = `Ukuran file lebih dari ${MAX_MB} MB`; err.classList.add('show'); return; }
+  err.classList.remove('show');
+  if (state.photos[k]) URL.revokeObjectURL(state.photos[k].url);
+  state.photos[k] = { url: URL.createObjectURL(f), name: f.name, size: (f.size / 1048576).toFixed(2) };
+  paintSlot(k); render();
+});
+function paintSlot(k) {
+  const el = $('slot-' + k); const pic = el.querySelector('.pic'); const acts = el.querySelector('.acts');
+  const ph = state.photos[k];
+  pic.classList.toggle('has', !!ph);
+  pic.style.backgroundImage = ph ? `url(${ph.url})` : '';
+  acts.innerHTML = ph
+    ? `<button class="link" onclick="window.open(state.photos['${k}'].url)">Perbesar</button><button class="link" onclick="pick('${k}')">Ganti</button><button class="link red" onclick="delPhoto('${k}')">Hapus</button><span style="font-size:11px;color:var(--muted);align-self:center">${ph.size} MB</span>`
+    : '';
+}
+function delPhoto(k) { URL.revokeObjectURL(state.photos[k].url); delete state.photos[k]; paintSlot(k); render(); }
+function zoomMain() { if (state.photos.p0) window.open(state.photos.p0.url); }
+
+/* ---------- indicators ---------- */
+function buildInds() {
+  let html = '';
+  INDS.forEach(([cat, no, label, std, good, bad]) => {
+    if (cat) html += `<div class="cat">${cat}</div>`;
+    html += `
+    <div class="ind" id="ind${no}">
+      <div class="top"><div class="no">${no}</div><div><h4>${label} <span style="color:var(--red)">*</span></h4>${std ? `<div class="std">${std}</div>` : ''}</div></div>
+      <div class="seg">
+        <label class="good" onclick="answer(${no},'good')"><input type="radio" name="i${no}">✓ ${good}</label>
+        <label class="bad" onclick="answer(${no},'bad')"><input type="radio" name="i${no}">✕ ${bad}</label>
+      </div>
+      <div class="note-wrap"></div>
+      <div class="miss-msg">Pilih salah satu.</div>
+    </div>`;
+  });
+  $('inds').innerHTML = html;
+}
+function answer(no, v) {
+  const prev = state.answers[no] || {};
+  state.answers[no] = { v, note: prev.note || '' };
+  paintInd(no); render();
+}
+function paintInd(no) {
+  const el = $('ind' + no); const a = state.answers[no];
+  el.querySelector('.good').classList.toggle('on', a && a.v === 'good');
+  el.querySelector('.bad').classList.toggle('on', a && a.v === 'bad');
+  const w = el.querySelector('.note-wrap');
+  if (a && a.v === 'bad') {
+    if (!w.firstChild) {
+      w.innerHTML = `<textarea placeholder="Keterangan kondisi fisik (opsional)" maxlength="255" oninput="state.answers[${no}].note=this.value"></textarea>`;
+      w.firstChild.value = a.note;
+    }
+  } else w.innerHTML = '';
+}
+
+/* ---------- flow ---------- */
+// prototype: tanpa validasi, semua step bisa dilewati kosong
+function fmtRp(el) { el.value = el.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+function next() {
+  if (state.step < 3) { state.step++; window.scrollTo(0, 0); render(); }
+  else $('confirm').classList.add('show');
+}
+function prev() { if (state.step > 1) { state.step--; window.scrollTo(0, 0); render(); } }
+function onNotes() {
+  state.notes = $('notes').value;
+  $('counter').textContent = `Tersisa ${255 - state.notes.length} karakter`;
+  render();
+}
+function closeConfirm() { $('confirm').classList.remove('show'); }
+let infoReset = false;
+function showInfo(title, msg, btn, sub = '', resetAfter = false) {
+  $('inTitle').textContent = title; $('inMsg').textContent = msg; $('inSub').textContent = sub; $('inBtn').textContent = btn;
+  infoReset = resetAfter; $('info').classList.add('show');
+}
+function closeInfo() { $('info').classList.remove('show'); if (infoReset) reset(); }
+const RJ = {
+  rejected_field: { title: 'Tolak Verval Lapangan', submit: 'Tolak', ph: 'Tuliskan catatan hasil verifikasi lapangan...', ok: 'Usulan berhasil ditolak pada verifikasi lapangan.' },
+  diverted_field: { title: 'Dialihkan', submit: 'Dialihkan', ph: 'Tuliskan alasan pengalihan usulan...', ok: 'Usulan berhasil dialihkan pada verifikasi lapangan.' },
+};
+function rjChange() {
+  const c = RJ[$('rjJenis').value] || { title: 'Ditolak/Dialihkan', submit: 'Kirim', ph: 'Tuliskan catatan...' };
+  $('rjTitle').textContent = c.title; $('rjSubmit').textContent = c.submit; $('rjNote').placeholder = c.ph;
+  $('rjJenisErr').classList.remove('show');
+}
+function rjCount() { $('rjCounter').textContent = `Tersisa ${255 - $('rjNote').value.length} Karakter`; $('rjNoteErr').classList.remove('show'); }
+function openReject() { $('rjJenis').value = ''; $('rjNote').value = ''; rjChange(); rjCount(); $('reject').classList.add('show'); }
+function closeReject() { $('reject').classList.remove('show'); }
+function submitReject() {
+  const j = $('rjJenis').value, n = $('rjNote').value.trim();
+  $('rjJenisErr').classList.toggle('show', !j); $('rjNoteErr').classList.toggle('show', !n);
+  if (!j || !n) return;
+  closeReject();
+  showInfo('Berhasil', RJ[j].ok, 'Kembali ke Detail Usulan', 'IMA-2026-001234', true);
+}
+function submitForm() { closeConfirm(); console.log('payload (mock):', { data: {nama: $('d_nama').value, gaji: $('d_gaji').value, hp: $('d_hp').value, alamat: $('d_alamat').value}, photos: state.photos, answers: state.answers, notes: state.notes }); showInfo('Berhasil', 'Usulan berhasil dinyatakan lolos verifikasi lapangan. (mock — belum terhubung API)', 'Kembali ke Penugasan', 'IMA-2026-001234', true); }
+
+function render() {
+  $('stepper').innerHTML = STEPS.map((s, i) => {
+    const n = i + 1; const cls = n === state.step ? 'active' : n < state.step ? 'done' : '';
+    return `<div class="step ${cls}"><i>${n < state.step ? '✓' : n}</i><span>${s}</span></div>${n < 3 ? '<span class="sep">›</span>' : ''}`;
+  }).join('');
+  [1, 2, 3].forEach(n => $('p' + n).style.display = n === state.step ? '' : 'none');
+  const cnt = (pre) => Object.keys(state.photos).filter(k => k[0] === pre).length;
+  $('photoProgress').textContent = `Foto terunggah: ${cnt('p')} / ${PHOTOS.length}`;
+  $('a_nik').textContent = $('d_nik').value;
+  $('a_nama').textContent = $('d_nama').value;
+  $('a_gaji').textContent = `Rp ${$('d_gaji').value} / bulan`;
+  $('a_alamat').textContent = `${$('d_alamat').value}, Cibaduyut, Bojongloa Kidul, Kota Bandung`;
+  const main = state.photos.p0;
+  $('a_foto').style.backgroundImage = main ? `url(${main.url})` : '';
+  $('a_foto').textContent = main ? '' : 'Foto utama belum diunggah';
+  $('btnNext').textContent = state.step === 3 ? 'Selesaikan & Kirim Verval' : 'Lanjutkan';
+  $('btnBack').style.display = state.step === 1 ? 'none' : '';
+}
+
+buildSlots(); buildInds(); render();
+</script>
+</body>
+</html>
