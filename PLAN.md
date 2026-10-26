@@ -16,8 +16,8 @@
 | **T2** | `scripts/build.js`: scan `prototypes/*.html` → `dist/` + `manifest.json` | `[x]` | - | Node bawaan, tanpa dependency |
 | **T3** | `landing/index.html`: fetch `manifest.json`, render list | `[x]` | - | Path relatif saja |
 | **T4** | `.github/workflows/deploy.yml`: build + deploy Pages on push `main` | `[x]` | - | Perlu T2, T3 |
-| **T5** | Setup GitHub: repo public, Settings → Pages → Source "GitHub Actions" | `[ ]` | - | Manual di GitHub UI |
-| **T6** | Masukkan 1 prototype nyata, verifikasi end-to-end | `[ ]` | - | Perlu T1–T5 |
+| **T5** | Setup GitHub: repo public, Settings → Pages → Source "GitHub Actions" | `[x]` | - | Manual di GitHub UI |
+| **T6** | Masukkan 1 prototype nyata, verifikasi end-to-end | `[x]` | - | Perlu T1–T5 |
 | **T7** | Catat konvensi (cara tambah prototype) di `README.md` + `CLAUDE.md` | `[x]` | - | |
 
 ---
