@@ -26,9 +26,13 @@ Push ke `main` → GitHub Actions build `dist/` → deploy otomatis.
 ## Build & preview lokal
 
 ```bash
-node scripts/build.js
-mkdir -p /tmp/p && ln -sfn "$PWD/dist" /tmp/p/prototypes && python3 -m http.server -d /tmp/p
-# buka http://localhost:8000/prototypes/
+scripts/preview.sh           # build + serve di http://localhost:8000/prototypes/
+scripts/preview.sh stop      # matikan server
+scripts/preview.sh restart   # rebuild + restart setelah edit prototype
+scripts/preview.sh status
+PORT=3000 scripts/preview.sh start   # ganti port
 ```
+
+Build saja (tanpa server): `node scripts/build.js`.
 
 Build gagal bila: tidak ada HTML, slug duplikat/reserved, atau `proto:date` kosong/format salah.
