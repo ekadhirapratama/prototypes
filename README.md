@@ -13,6 +13,7 @@ Push ke `main` → GitHub Actions build `dist/` → deploy otomatis.
    <meta name="proto:desc" content="Prototype halaman invoice">
    <meta name="proto:date" content="2026-10-26">   <!-- wajib, YYYY-MM-DD -->
    <meta name="proto:tags" content="invoice,finance">
+   <meta name="proto:hidden" content="true">     <!-- opsional: gak tampil di landing, tetap bisa di-link -->
    ```
 3. Commit, push ke `main`.
 

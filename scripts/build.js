@@ -32,7 +32,7 @@ const items = files.map((file) => {
   const date = meta(html, 'date');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail(`${file}: <meta name="proto:date" content="YYYY-MM-DD"> is required`);
   const tags = meta(html, 'tags').split(',').map((t) => t.trim()).filter(Boolean);
-  return { slug, file, title, desc: meta(html, 'desc'), date, tags };
+  return { slug, file, title, desc: meta(html, 'desc'), date, tags, hidden: meta(html, 'hidden') === 'true' };
 });
 
 items.sort((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
@@ -41,7 +41,8 @@ fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist);
 for (const { file } of items) fs.copyFileSync(path.join(srcDir, file), path.join(dist, file));
 fs.copyFileSync(path.join(root, 'landing', 'index.html'), path.join(dist, 'index.html'));
-fs.writeFileSync(path.join(dist, 'manifest.json'), JSON.stringify(items, null, 2));
+// hidden: file tetap di-copy (bisa di-link dari prototype lain), tapi gak masuk landing
+fs.writeFileSync(path.join(dist, 'manifest.json'), JSON.stringify(items.filter((i) => !i.hidden).map(({ hidden, ...rest }) => rest), null, 2));
 fs.writeFileSync(path.join(dist, '.nojekyll'), '');
 fs.writeFileSync(path.join(dist, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
 
