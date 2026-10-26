@@ -4,27 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#fafafa; --fg:#111; --muted:#666; --card:#fff; --line:#e5e5e5; --accent:#2563eb; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#111; --fg:#eee; --muted:#999; --card:#1a1a1a; --line:#2a2a2a; --accent:#60a5fa; }
-  }
+  /* gaya brutalist/terminal: krem + hitam, border tegas, radius 0, label mono uppercase */
+  :root { --bg:#faf7f2; --fg:#000; --muted:#66625b; --line:#d5cdc0; --accent:#000; --accent-fg:#faf7f2; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,sans-serif; }
-  main { max-width:720px; margin:0 auto; padding:32px 16px; }
-  h1 { margin:0 0 24px; font-size:24px; }
-  a.card { display:block; padding:16px; margin-bottom:12px; background:var(--card); border:1px solid var(--line); border-radius:8px; color:inherit; text-decoration:none; }
-  a.card:hover { border-color:var(--accent); }
-  .t { font-weight:600; }
-  .d { color:var(--muted); margin:4px 0; }
-  .m { color:var(--muted); font-size:13px; }
-  .tag { display:inline-block; margin-left:6px; padding:0 8px; border:1px solid var(--line); border-radius:999px; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 Inter,system-ui,sans-serif; }
+  ::selection { background:var(--accent); color:var(--accent-fg); }
+  .mono { font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; text-transform:uppercase; letter-spacing:.08em; font-size:12px; }
+  main { max-width:480px; margin:0 auto; padding:32px 16px 48px; }
+  h1 { margin:0 0 8px; font-size:clamp(32px,10vw,44px); line-height:1; font-weight:800; letter-spacing:-.03em; text-transform:uppercase; }
+  .sub { margin:0 0 28px; color:var(--muted); }
+  h2 { margin:0 0 16px; padding-bottom:8px; border-bottom:2px solid var(--fg); }
+  a.card { display:grid; grid-template-columns:48px 1fr; gap:16px; padding:16px; margin-bottom:16px; border:2px solid var(--fg); color:inherit; text-decoration:none; background:var(--bg); transition:transform .1s, box-shadow .1s; }
+  a.card:hover, a.card:focus-visible { transform:translate(-4px,-4px); box-shadow:4px 4px 0 var(--fg); outline:none; }
+  .n { color:var(--muted); padding-top:4px; }
+  .t { font-weight:800; font-size:18px; line-height:1.3; }
+  .d { margin:4px 0 12px; color:var(--muted); }
+  .tag { display:inline-block; margin:0 6px 4px 0; padding:2px 8px; border:1px solid var(--fg); }
+  .date { margin-left:auto; color:var(--muted); }
+  .row { display:flex; flex-wrap:wrap; align-items:center; }
 </style>
 </head>
 <body>
 <main>
   <h1>Prototypes</h1>
-  <div id="list">Memuat…</div>
+  <p class="sub">Kumpulan prototype single-file HTML.</p>
+  <h2 class="mono">Index</h2>
+  <div id="list" class="mono">Memuat…</div>
 </main>
 <script>
 const list = document.getElementById('list');
@@ -34,11 +43,15 @@ fetch('./manifest.json')
   .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then((items) => {
     if (!items.length) { list.textContent = 'Belum ada prototype.'; return; }
-    list.innerHTML = items.map((p) => `
+    list.className = '';
+    list.innerHTML = items.map((p, i) => `
       <a class="card" href="./${encodeURIComponent(p.slug)}.html">
-        <div class="t">${esc(p.title)}</div>
-        ${p.desc ? `<div class="d">${esc(p.desc)}</div>` : ''}
-        <div class="m">${esc(p.date)}${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <span class="n mono">${String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <div class="t">${esc(p.title)}</div>
+          ${p.desc ? `<p class="d">${esc(p.desc)}</p>` : ''}
+          <div class="row mono">${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}<span class="date">${esc(p.date)}</span></div>
+        </div>
       </a>`).join('');
   })
   .catch(() => { list.textContent = 'Gagal memuat daftar prototype.'; });
