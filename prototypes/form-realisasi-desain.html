@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype Form Realisasi (Progres Perbaikan) — Imah Aing Web</title>
+<meta name="proto:desc" content="Form progres perbaikan realisasi rutilahu (web mobile): 3 tahap 0/50/100%, upload min. 3 foto, konfirmasi simpan">
+<meta name="proto:date" content="2026-10-27">
+<meta name="proto:tags" content="realisasi,web,form">
+<!--
+  PROTOTYPE STATIS - bukan kode produksi. Data dummy, tanpa API, state di memori JS (hilang saat reload).
+  Warna hex = ESTIMASI dari komponen asli, bukan token resmi:
+  border kartu #069550, tombol #16A34A, bg halaman #EFF2F3, teks #1F2121.
+  Asumsi:
+  - Tab Tahap 1/2/3 BEBAS dibuka (tidak terkunci urut). Kalau bisnis mewajibkan urut, tinggal kunci tab n+1 sampai tab n tersimpan.
+  - Setelah Simpan, tab ditandai "(selesai)" (teks saja, tanpa ikon centang) dan tidak ada teks "sudah tersimpan" di bawah tombol; foto masih bisa diubah, tombol berubah jadi "Simpan Perubahan" dan aktif lagi hanya jika jumlah >= 3.
+  - Chip "Realisasi Rutilahu" memakai biru estimasi (#1565C0), warna status aslinya belum ada di konstanta.
+  - Tombol close (X) di header kembali ke Riwayat Ajuan, sama seperti back (di app asli menutup webview).
+  - Tidak ada batas maksimum foto / ukuran file / validasi tipe selain accept="image/*".
+  Revisi 2026-10-27: (1) klik Simpan membuka popup konfirmasi; "Ya, Simpan" baru menyimpan, Batal/overlay/Esc/X menutup tanpa simpan.
+  Warna tombol sekunder (outline hijau) = ESTIMASI, class JDS secondary tidak terbaca dari source.
+  (2) label tab "(selesai)"; (3) teks .saved di bawah tombol dihapus.
+-->
+<style>
+  :root { --bg:#EFF2F3; --ink:#1F2121; --muted:#6b7280; --line:#e5e7eb; --green:#16A34A; --green-d:#15803d; --card-l:#069550; --blue:#1565C0; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:#cfd8dc; font:14px/1.5 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); display:flex; justify-content:center; align-items:center; }
+  .phone { width:100%; max-width:430px; height:100vh; background:var(--bg); display:flex; flex-direction:column; position:relative; overflow:hidden; }
+  @media (min-width:600px) { body { padding:24px; } .phone { width:390px; height:780px; max-height:calc(100vh - 48px); border:8px solid #263238; border-radius:32px; } }
+  header { background:#fff; height:52px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 8px; border-bottom:1px solid var(--line); }
+  header b { font-size:16px; }
+  .ib { width:40px; height:40px; border:0; background:none; border-radius:50%; font-size:20px; cursor:pointer; color:var(--ink); }
+  .ib:hover { background:#f3f4f6; }
+  .screen { display:none; flex:1; min-height:0; flex-direction:column; }
+  .screen.on { display:flex; }
+  .scroll { flex:1; overflow-y:auto; }
+  h1 { font-size:15px; letter-spacing:.04em; margin:0; padding:14px 16px 8px; text-transform:uppercase; }
+  .item { display:flex; gap:10px; padding:14px 16px; background:#fff; border-left:4px solid var(--card-l); border-bottom:1px solid var(--line); }
+  .item .body { flex:1; min-width:0; }
+  .id { font-size:12px; color:var(--muted); }
+  .nm { font-weight:600; margin-top:2px; }
+  .sub { font-size:12px; color:#9ca3af; }
+  .chip { display:inline-block; margin-top:4px; font-size:12px; font-weight:500; padding:1px 8px; border-radius:4px; color:var(--blue); background:#1565C01A; }
+  .chip.o { color:#DD5E5E; background:#DD5E5E1A; }
+  .right { display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; gap:6px; flex:none; }
+  .date { font-size:12px; color:#9ca3af; white-space:nowrap; }
+  .btn { border:0; border-radius:6px; background:var(--green); color:#fff; font-weight:500; font-size:12px; font-family:inherit; padding:6px 12px; cursor:pointer; }
+  .btn:hover { background:var(--green-d); }
+  .btn.full { width:100%; padding:12px; font-size:14px; border-radius:8px; }
+  .btn:disabled { background:#cfd8dc; color:#78909c; cursor:not-allowed; }
+  .summary { background:#fff; margin:8px 16px 0; padding:12px; border-radius:8px; border:1px solid var(--line); }
+  .tabs { display:flex; background:#fff; margin-top:12px; border-bottom:1px solid var(--line); }
+  .tab { flex:1; border:0; background:none; padding:10px 2px; font-weight:500; font-size:13px; font-family:inherit; color:var(--muted); border-bottom:3px solid transparent; cursor:pointer; }
+  .tab small { display:block; font-size:11px; font-weight:400; }
+  .tab.on { color:var(--green-d); border-color:var(--green); }
+  .tab .ok { color:var(--green); }
+  .panel { display:none; padding:16px; }
+  .panel.on { display:block; }
+  label.drop { display:block; border:2px dashed #9ca3af; border-radius:10px; background:#fff; padding:22px 12px; text-align:center; cursor:pointer; color:var(--muted); }
+  label.drop:hover { border-color:var(--green); color:var(--green-d); }
+  label.drop input { display:none; }
+  label.drop b { display:block; color:var(--ink); font-size:14px; margin-top:4px; }
+  .count { margin:8px 2px; font-size:12px; color:#DD5E5E; }
+  .count.ok { color:var(--green-d); }
+  .thumbs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .th { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; background:#ddd; }
+  .th img { width:100%; height:100%; object-fit:cover; display:block; }
+  .th button { position:absolute; top:4px; right:4px; width:22px; height:22px; border:0; border-radius:50%; background:rgba(0,0,0,.65); color:#fff; font-size:13px; line-height:1; cursor:pointer; }
+  .save { margin-top:16px; }
+  .ov { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; padding:16px; }
+  .ov.on { display:flex; }
+  .modal { width:100%; background:#fff; border-radius:8px; box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1); overflow:hidden; }
+  .mh { display:flex; justify-content:flex-end; padding:8px 24px; border-bottom:1px solid var(--line); }
+  .mh .ib { width:44px; height:44px; }
+  .mc { padding:16px 24px; display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; }
+  .mc h3 { margin:0 0 4px; font-size:20px; line-height:28px; font-weight:600; color:#111827; }
+  .mc p { margin:0; font-size:14px; line-height:23px; color:#4b5563; }
+  .mf { display:flex; flex-direction:column; gap:16px; padding:16px 24px; border-top:1px solid var(--line); }
+  .mf .btn { width:100%; padding:12px 16px; font-size:14px; border-radius:8px; font-weight:700; }
+  .btn.sec { background:#fff; color:var(--green-d); border:1px solid var(--green); }
+  .btn.sec:hover { background:#f0fdf4; }
+  .toast { position:absolute; left:16px; right:16px; bottom:20px; background:#166534; color:#fff; padding:12px 14px; border-radius:8px; opacity:0; transform:translateY(10px); transition:.25s; pointer-events:none; }
+  .toast.show { opacity:1; transform:none; }
+  @media (prefers-color-scheme:dark) { :root { --bg:#14181A; --ink:#ECEFF1; --line:#33393D; } header,.item,.summary,.tabs,label.drop { background:#1E2427; } .ib { color:var(--ink); } .modal { background:#14181A; } .mc h3 { color:#ECEFF1; } .mc p { color:#CFD8DC; } .btn.sec { background:transparent; color:#86efac; border-color:#86efac; } .btn.sec:hover { background:#1E2427; } }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <button class="ib" id="back" aria-label="Kembali">&#8592;</button>
+    <b>Sapawarga</b>
+    <button class="ib" id="close" aria-label="Tutup">&#10005;</button>
+  </header>
+
+  <!-- Layar 1: Riwayat Ajuan -->
+  <section class="screen on" id="s-riwayat">
+    <div class="scroll">
+      <h1>Riwayat Ajuan</h1>
+      <div class="item">
+        <div class="body">
+          <div class="id">IA-3207********0006</div>
+          <div class="nm">B**i D****n</div>
+          <div class="sub">Pengusul: B**i D****n</div>
+          <span class="chip">Realisasi Rutilahu</span>
+        </div>
+        <div class="right">
+          <button class="btn" id="go">Update Progress</button>
+          <span class="date">21 Jul 2026</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="body">
+          <div class="id">IA-3207********0011</div>
+          <div class="nm">S**i R****u</div>
+          <div class="sub">Pengusul: RT 03</div>
+          <span class="chip o">Menunggu Verifikasi</span>
+        </div>
+        <div class="right"><span class="date">14 Jul 2026</span></div>
+      </div>
+      <div class="item">
+        <div class="body">
+          <div class="id">IA-3207********0019</div>
+          <div class="nm">A**p S******r</div>
+          <div class="sub">Pengusul: A**p S******r</div>
+          <span class="chip">Realisasi Rutilahu</span>
+        </div>
+        <div class="right"><span class="date">02 Jun 2026</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Layar 2: Progres Perbaikan (3 tab) -->
+  <section class="screen" id="s-progres">
+    <div class="scroll">
+      <h1>Progres Perbaikan</h1>
+      <div class="summary">
+        <div class="id">IA-3207********0006</div>
+        <div class="nm">B**i D****n</div>
+        <span class="chip">Realisasi Rutilahu</span>
+      </div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div id="panels"></div>
+    </div>
+  </section>
+
+  <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="modal">
+      <div class="mh"><button class="ib" id="m-x" aria-label="Tutup">&#10005;</button></div>
+      <div class="mc">
+        <svg width="48" height="48" viewBox="0 0 49 48" fill="none" aria-hidden="true"><circle cx="24.5" cy="24" r="24" fill="#F3FAF7"/><path d="M33.28 15.22a1 1 0 0 0-.79-.17l-16.5 6a.9.9 0 0 0 0 1.43l6.45 2.57 4.75-4.77 1.06 1.06-4.78 4.78 2.58 6.44a.75.75 0 0 0 1.39.02l6-16.48a.75.75 0 0 0-.16-.88z" fill="#057A55"/></svg>
+        <div><h3 id="m-title"></h3><p id="m-desc"></p></div>
+      </div>
+      <div class="mf">
+        <button class="btn" id="m-ok">Ya, Simpan</button>
+        <button class="btn sec" id="m-cancel">Batal</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+</div>
+
+<script>
+  const MIN = 3, STAGES = [0, 50, 100];
+  // state per tab, di memori: { files: [{url}], saved: bool }
+  const state = STAGES.map(() => ({ files: [], saved: false }));
+  let active = 0;
+  const $ = (id) => document.getElementById(id);
+
+  function show(name) {
+    $('s-riwayat').classList.toggle('on', name === 'riwayat');
+    $('s-progres').classList.toggle('on', name === 'progres');
+  }
+  // back & close sama-sama balik ke riwayat (shortcut: close di app asli menutup webview)
+  const toRiwayat = () => show('riwayat');
+  $('go').onclick = () => show('progres');
+  $('back').onclick = toRiwayat;
+  $('close').onclick = toRiwayat;
+
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  let pending = -1; // tahap yang menunggu konfirmasi simpan
+  function closeConfirm() { pending = -1; $('ov').classList.remove('on'); }
+  function openConfirm(i) {
+    pending = i;
+    $('m-title').textContent = 'Simpan Progres';
+    $('m-desc').textContent = `Apakah Anda yakin ingin menyimpan progres Tahap ${i + 1} (${STAGES[i]}%)?`;
+    $('ov').classList.add('on'); $('m-ok').focus();
+  }
+  $('m-cancel').onclick = $('m-x').onclick = closeConfirm;
+  $('ov').onclick = (e) => { if (e.target === $('ov')) closeConfirm(); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConfirm(); });
+  $('m-ok').onclick = () => {
+    const i = pending;
+    closeConfirm();
+    if (i < 0 || state[i].files.length < MIN) return;
+    state[i].saved = true;
+    toast(`Progres Tahap ${i + 1} (${STAGES[i]}%) berhasil disimpan`);
+    render();
+  };
+
+  function render() {
+    $('tabs').innerHTML = STAGES.map((p, i) =>
+      `<button class="tab ${i === active ? 'on' : ''}" role="tab" data-i="${i}">Tahap ${i + 1}<small>${p}% ${state[i].saved ? '<span class="ok">(selesai)</span>' : ''}</small></button>`).join('');
+    $('panels').innerHTML = STAGES.map((p, i) => {
+      const s = state[i], n = s.files.length, okay = n >= MIN;
+      return `<div class="panel ${i === active ? 'on' : ''}" role="tabpanel">
+        <label class="drop">
+          <input type="file" accept="image/*" multiple data-up="${i}">
+          <span style="font-size:26px">&#128247;</span>
+          <b>Pilih minimal ${MIN} Foto untuk Upload</b>
+          Ketuk untuk memilih foto progres ${p}%
+        </label>
+        <div class="count ${okay ? 'ok' : ''}">${n}/${MIN} minimal${okay ? ' - sudah cukup' : ''}</div>
+        <div class="thumbs">${s.files.map((f, k) =>
+          `<div class="th"><img src="${f.url}" alt="Foto ${k + 1}"><button data-del="${i}:${k}" aria-label="Hapus foto ${k + 1}">&#10005;</button></div>`).join('')}</div>
+        <div class="save">
+          <button class="btn full" data-save="${i}" ${okay ? '' : 'disabled'}>${s.saved ? 'Simpan Perubahan' : 'Simpan'}</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-i],[data-del],[data-save]');
+    if (!t) return;
+    if (t.dataset.i) { active = +t.dataset.i; }
+    if (t.dataset.del) {
+      const [i, k] = t.dataset.del.split(':').map(Number);
+      URL.revokeObjectURL(state[i].files[k].url);
+      state[i].files.splice(k, 1);
+      state[i].saved = false; // foto berubah -> perlu simpan ulang
+    }
+    if (t.dataset.save) {
+      const i = +t.dataset.save;
+      if (state[i].files.length < MIN) return;
+      openConfirm(i);
+      return;
+    }
+    render();
+  });
+  document.addEventListener('change', (e) => {
+    const inp = e.target.closest('[data-up]');
+    if (!inp) return;
+    const i = +inp.dataset.up;
+    [...inp.files].filter(f => f.type.startsWith('image/'))
+      .forEach(f => state[i].files.push({ url: URL.createObjectURL(f) }));
+    state[i].saved = false;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

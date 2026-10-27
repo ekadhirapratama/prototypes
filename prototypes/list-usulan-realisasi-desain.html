@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — CMS Realisasi Rutilahu (P1)</title>
+<meta name="proto:desc" content="List realisasi rutilahu di CMS: filter wilayah/tanggal, stepper tahap, progres perbaikan 0/50/100%, dialog foto progres">
+<meta name="proto:date" content="2026-10-27">
+<meta name="proto:tags" content="realisasi,cms,list">
+<!--
+  PROTOTYPE STATIS — bukan kode produksi. Data dummy, tanpa API.
+  Project: cms (Sapawarga CMS, modul Imah Aing) — tahap Realisasi (setelah "Penetapan Penerima Bantuan")
+  Sidebar SENGAJA DIHAPUS (supaya ringkas); halaman = konten saja.
+
+  Masih TIDAK identik / dekorasi prototype: badge tampil bukan dari mapping status asli, stepper progres 3 node,
+   modal Detail, foto placeholder, date range pakai 2 <input type=date> native (asli: vue2-datepicker range),
+   <select> native (asli: BaseSelectSearch dropdown custom), sort header hanya ikon (tidak interaktif).
+  Asumsi:
+   - A2: tombol "Update" disabled bila Status Penyerahan = Mitra Penyerah; "Detail" selalu aktif tapi tanpa aksi (nanti redirect ke halaman detail usulan, di luar scope prototype).
+   - Realisasi ditandai di stepper sebagai tahap 8-9 (Penyerahan Bantuan + Pelaksanaan Perbaikan) — asumsi.
+   - Foto di Detail = placeholder gradient (bukan gambar asli); dialog foto read-only dibuka dari kolom Progres Perbaikan (klik node 0/50/100 = fokus ke tahap itu).
+   - Filter Kab/Kota > Kecamatan > Desa dependen sederhana (opsi dummy); tanggal = rentang tanggal update terakhir.
+   - Kolom Status semua "Lolos Verifikasi Lapangan" (sesuai rough design).
+   - Blok "Bukti Transfer" TIDAK termasuk (A4). Istilah user-facing: "Usulan".
+-->
+<style>
+  :root {
+    --green:#069550; --green-600:#16A75C; --green-700:#069550; --green-800:#008444; --green-50:#E6F6EC;
+    --bg:#EFF2F3; --border:#E0E0E0; --text:#424242; --muted:#757575;
+    --gray-50:#FAFAFA; --gray-100:#F5F5F5; --gray-200:#EEEEEE; --gray-300:#E0E0E0; --gray-400:#BDBDBD; --gray-500:#9E9E9E; --gray-600:#757575; --gray-800:#424242;
+    --orange:#FF7500; --blue:#1E88E5;
+  }
+  * { box-sizing:border-box; font-family:Lato,sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--text); font-size:14px; padding:24px; }
+  button { font:inherit; }
+  /* header halaman (Base/Header + Base/Breadcrumb) */
+  .top { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:flex-start; padding-bottom:16px; }
+  .crumb { height:45px; display:flex; align-items:center; font-family:Roboto,sans-serif; font-size:28px; font-weight:500; color:#627798; }
+  .crumb span + span::before { content:'/'; } .crumb span:last-child { color:#022B55; }
+  .subt { margin:4px 0 0; font-family:Roboto,sans-serif; font-size:16px; color:#415C84; }
+  .subt, .crumb, .crumb * { font-family:Roboto,sans-serif; }
+  /* stepper compact (Base/StepFlow) */
+  .stepflow { width:100%; max-width:456px; padding:32px 0 4px; }
+  .sf-row { display:flex; align-items:center; width:100%; }
+  .sf-step { position:relative; display:flex; flex:1; align-items:center; } .sf-step:last-child { flex:0; }
+  .sf-step::after { content:""; height:2px; flex:1; margin:0 3px; background:#d1d5db; } .sf-step:last-child::after { display:none; }
+  .sf-step.completed::after { background:#46a509; }
+  .sf-dot { position:relative; display:flex; flex-shrink:0; align-items:center; justify-content:center; width:14px; height:14px; background:#fff; border:2px solid #9ca3af; border-radius:50%; cursor:help; transition:transform .15s ease; }
+  .sf-dot:hover { transform:scale(1.15); }
+  .completed .sf-dot { background:#46a509; border-color:#46a509; }
+  .active .sf-dot { width:16px; height:16px; background:#fff; border:3px solid #46a509; box-shadow:0 0 0 4px rgba(70,165,9,.12); }
+  .sf-tip { position:absolute; bottom:calc(100% + 12px); left:50%; z-index:10; width:max-content; max-width:220px; padding:7px 10px; color:#fff; font-size:11px; font-weight:500; line-height:1.4; text-align:center; background:#111827; border-radius:6px; opacity:0; visibility:hidden; transform:translateX(-50%); transition:opacity .15s; pointer-events:none; }
+  .sf-tip::after { content:""; position:absolute; top:100%; left:50%; border:5px solid transparent; border-top-color:#111827; transform:translateX(-50%); }
+  .sf-dot:hover .sf-tip { visibility:visible; opacity:1; }
+  .sf-info { display:flex; align-items:center; gap:8px; margin-top:6px; }
+  .sf-cnt { color:#6b7280; font-size:13px; font-weight:500; } .sf-div { width:4px; height:4px; background:#9ca3af; border-radius:50%; } .sf-lbl { color:#1f2937; font-size:14px; font-weight:600; }
+  /* card (BaseTabGroup + BaseTabPanel) */
+  .card { background:#fff; border:2px solid var(--green-600); border-radius:8px; padding:24px 12px 16px; overflow:auto; }
+  /* filter */
+  .filters { display:grid; grid-template-columns:1fr 1.5fr 1fr 1fr 1fr 1fr; column-gap:8px; align-items:start; margin-bottom:16px; width:100%; }
+  @media (max-width:1100px){ .filters{grid-template-columns:1fr 1fr; row-gap:8px;} }
+  .jsearch { display:flex; align-items:center; padding:0 0 0 12px; border-radius:8px; border:1px solid var(--gray-500); background:#fff; }
+  .jsearch:focus-within { border-color:var(--green-700); box-shadow:inset 0 0 0 1px #FFC800; }
+  .jsearch svg { flex:none; margin-right:8px; } .jsearch input { flex:1; min-width:0; border:none; background:transparent; font-size:14px; line-height:16px; color:var(--gray-800); padding:9px 0; outline:none; }
+  .jsearch input::placeholder { color:var(--gray-600); }
+  .mxd { border:1px solid var(--gray-300); border-radius:8px; display:flex; }
+  .mxd .in { display:flex; align-items:center; gap:2px; width:100%; height:34px; padding:6px 8px 6px 10px; background:var(--gray-50); border:1px solid var(--gray-500); border-radius:4px; box-shadow:inset 0 1px 1px rgba(0,0,0,.075); font-size:14px; line-height:1.4; }
+  .mxd:focus-within .in { border-color:#409aff; }
+  .mxd input { min-width:0; flex:1; border:0; background:transparent; font-size:12px; color:var(--gray-800); outline:none; padding:0; }
+  .mxd .sep { color:var(--gray-800); }
+  .sel { width:100%; height:34px; appearance:none; -webkit-appearance:none; border:1px solid var(--gray-500); border-radius:6px; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23039550' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 8px center; padding:4px 28px 4px 12px; font-size:16px; line-height:24px; color:#111827; text-overflow:ellipsis; cursor:pointer; }
+  .sel.pl { color:#757575; }
+  .sel:focus { outline:none; border-color:#FEC802; box-shadow:0 0 0 1px #039550; }
+  .btn { height:36px; min-width:96px; border-radius:10px; border:1px solid var(--green-800); background:transparent; color:var(--green-800); font-weight:500; font-size:14px; padding:8px 16px; cursor:pointer; }
+  .btn:hover { background:var(--green-50); } .btn.primary { background:var(--green-700); border-color:var(--green-700); color:#fff; } .btn.primary:hover { background:var(--green-800); }
+  .btn:disabled { border:1px solid var(--gray-300); color:var(--gray-500); background:var(--gray-100); cursor:not-allowed; }
+  .btn-reset { width:100%; padding:6px; border-radius:8px; border:1px solid var(--green-600); background:transparent; color:var(--text); font-size:14px; font-weight:700; line-height:20px; cursor:pointer; transition:colors .15s; }
+  .btn-reset.on { background:var(--green-600); color:#fff; }
+  .btn-reset:disabled { border-color:#737373; background:#D4D4D4; color:#737373; cursor:not-allowed; }
+  /* tabel (Base/Table) */
+  .tbl-wrap { overflow-x:auto; width:100%; }
+  table { width:100%; min-width:980px; border-collapse:collapse; table-layout:fixed; }
+  thead tr { background:#069550; }
+  th { height:42px; min-width:120px; padding:8px 6px; border-right:1px solid #fff; text-align:left; font-size:14px; font-weight:700; text-transform:capitalize; color:#fff; white-space:nowrap; cursor:pointer; }
+  th:last-child { border-right:0; border-top-right-radius:8px; } th:first-child { border-top-left-radius:8px; }
+  th div { display:flex; align-items:center; justify-content:space-between; } th svg { opacity:.5; transform:rotate(90deg); flex:none; margin-left:4px; }
+  tbody { background:#fff; color:#424242; } tbody tr:nth-child(even) { background:#FAFAFA; }
+  td { padding:10px 8px; border:1px solid #eee; font-size:14px; vertical-align:middle; word-break:break-word; }
+  .mono { font-family:ui-monospace,Menlo,monospace; font-size:12px; } .muted { color:var(--muted); font-size:11px; }
+  .badge { display:inline-block; width:fit-content; font-size:14px; font-weight:600; padding:4px 10px; border-radius:32px; background:#F5F5F5; white-space:nowrap; }
+  .badge.green { color:#069550; } .badge.orange { color:var(--orange); } .badge.blue { color:var(--blue); }
+  .prog { display:flex; align-items:center; width:150px; }
+  .prog .n { width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #9ca3af; flex:none; }
+  .prog .n.on { background:#46a509; border-color:#46a509; }
+  .prog .l { flex:1; height:2px; background:#d1d5db; } .prog .l.on { background:#46a509; }
+  .prog-lbl { display:flex; justify-content:space-between; width:150px; font-size:10px; color:var(--muted); margin-top:2px; }
+  .prog-btn { display:block; padding:4px 6px; margin:-4px -6px; border:0; border-radius:8px; background:none; font:inherit; text-align:left; cursor:pointer; }
+  .prog-btn:hover, .prog-btn:focus-visible { background:#E8F5EE; outline:0; }
+  .prog-btn .n { cursor:pointer; } .prog-btn .n:hover { transform:scale(1.25); }
+  .stage.focus h3 { background:#E8F5EE; border-radius:6px; padding:4px 8px; margin-left:-8px; margin-right:-8px; }
+  .acts { display:flex; gap:8px; justify-content:center; }
+  .empty { padding:12px 16px; text-align:center; border-bottom:1px solid #E5E7EB; }
+  /* pagination (Base/Table/Pagination) */
+  .pager { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border:1px solid #E5E7EB; border-top-color:#069550; background:#FAFAFA; padding:4px 12px; color:#424242; font-size:14px; }
+  .pager > div { display:flex; align-items:center; } .pager .sel { width:70px; margin:0 8px; font-size:14px; line-height:20px; font-weight:700; } .pager .sel.pg { width:65px; }
+  .pager .arr { width:40px; padding:4px; border:0; border-radius:4px; background:transparent; display:grid; place-items:center; } .pager .arr:hover:not(:disabled) { background:#f3f4f6; } .pager .arr:disabled { cursor:not-allowed; }
+  .pager .right { gap:16px; } .pager .arrs { display:flex; gap:4px; }
+  .overlay { position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; } .overlay.show { display:flex; }
+  .modal { background:#fff; border-radius:14px; width:100%; max-width:720px; max-height:calc(100vh - 32px); display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+  .m-head { display:flex; justify-content:space-between; gap:12px; padding:18px 20px 12px; border-bottom:1px solid var(--border); } .m-head h2 { margin:0; font-size:17px; }
+  .x { background:none; border:0; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; }
+  .m-body { padding:16px 20px; overflow-y:auto; } .m-foot { padding:12px 20px 16px; border-top:1px solid var(--border); text-align:right; }
+  .kv { display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; margin-bottom:16px; } .kv small { display:block; color:var(--muted); font-size:11px; } .kv b { font-size:13px; }
+  .stage { margin-top:14px; } .stage h3 { margin:0 0 8px; font-size:13px; color:var(--green); display:flex; justify-content:space-between; }
+  .photos { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .ph { aspect-ratio:4/3; border-radius:8px; border:1px solid #E5E7EB; display:grid; place-items:center; font-size:11px; font-weight:700; color:#2F6B4A; background:linear-gradient(135deg,#BFE6CF,#8CCBA8); }
+  .ph.none { background:#F3F4F6; color:#9CA3AF; font-weight:400; grid-column:1/-1; aspect-ratio:auto; padding:18px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <nav class="crumb"><span>Daftar Pengusulan Masuk</span><span>Realisasi Rutilahu</span></nav>
+    <p class="subt">Penyerahan dan Monitoring Progres Realisasi Perbaikan Rutilahu</p>
+  </div>
+  <div class="stepflow" id="stepper"></div>
+</div>
+
+<div class="card">
+  <div class="filters">
+    <label class="jsearch"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="2.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M15 15l6 6"/></svg><input id="q" placeholder="Cari Nama atau NIK"></label>
+    <div class="mxd"><div class="in"><input type="date" id="d1" title="Update terakhir dari"><span class="sep">-</span><input type="date" id="d2" title="sampai"></div></div>
+    <select class="sel" id="kab"></select>
+    <select class="sel" id="kec"></select>
+    <select class="sel" id="des"></select>
+    <button class="btn-reset" id="reset" disabled>Reset</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr id="thr"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>Tidak ada data usulan yang sesuai filter.</div>
+  </div>
+  <div class="pager">
+    <div>Tampilkan<select class="sel"><option>10</option><option>25</option><option>50</option><option>100</option></select><span>Item dari total <b id="total"></b></span></div>
+    <div class="right">
+      <div>Halaman<select class="sel pg" style="margin:0 8px"><option>1</option></select><span>dari <b>1</b></span></div>
+      <div class="arrs"><button class="arr" disabled aria-label="Sebelumnya">‹</button><button class="arr" disabled aria-label="Berikutnya">›</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov"><div class="modal" role="dialog" aria-modal="true">
+  <div class="m-head"><div><h2>Foto Progres Perbaikan</h2><div class="muted" id="m-sub"></div></div><button class="x" id="mx" aria-label="Tutup">×</button></div>
+  <div class="m-body" id="m-body"></div>
+  <div class="m-foot"><button class="btn" id="mc">Tutup</button></div>
+</div></div>
+
+<script>
+// data dummy; progress: 0/50/100 = tahap tercapai terakhir, null = belum mulai
+const D = [
+  {nik:'3200000000000001',nama:'Dummy User 1',alamat:'Kp. Contoh RT 02/RW 05',kab:'Kab. Ciamis',kec:'Ciamis',des:'Sukamaju',serah:'MITRA',prog:100,tgl:'2026-10-20',foto:{0:3,50:3,100:4}},
+  {nik:'3200000000000002',nama:'Dummy User 2',alamat:'Kp. Contoh RT 03/RW 04',kab:'Kota Bandung',kec:'Bojongloa Kidul',des:'Cibaduyut',serah:'BELUM',prog:50,tgl:'2026-10-18',foto:{0:3,50:3,100:0}},
+  {nik:'3200000000000003',nama:'Dummy User 3',alamat:'Kp. Contoh RT 01/RW 03',kab:'Kab. Bogor',kec:'Cibinong',des:'Cibinong',serah:'BELUM',prog:0,tgl:'2026-10-15',foto:{0:3,50:0,100:0}},
+  {nik:'3200000000000004',nama:'Dummy User 4',alamat:'Kp. Contoh RT 04/RW 01',kab:'Kab. Bandung',kec:'Soreang',des:'Sukasari',serah:'BELUM',prog:null,tgl:null,foto:{0:0,50:0,100:0}},
+  {nik:'3200000000000005',nama:'Dummy User 5',alamat:'Kp. Contoh RT 03/RW 02',kab:'Kab. Ciamis',kec:'Panjalu',des:'Panjalu',serah:'MITRA',prog:100,tgl:'2026-10-22',foto:{0:3,50:3,100:5}},
+];
+// aktif = tahap 8-9 (Realisasi)
+const STEPS=['Menunggu Verifikasi','Proses Verifikasi dan Validasi Data','Penentuan Nominatif','Pengajuan Calon Penerima Bantuan','Penugasan Verifikasi Lapangan','Verval Lapangan','Penetapan Penerima Bantuan','Penyerahan Bantuan','Pelaksanaan Perbaikan','Selesai'];
+const ACT=[7,8];
+// masking = maskNIK / maskName; alamat = narasi contoh, tidak di-mask; pencarian tetap pakai data asli
+const star=n=>'*'.repeat(n);
+const maskNIK=v=>{const s=String(v||'');return s.length<=4?star(s.length):s.slice(0,4)+star(s.length-8)+s.slice(-4)};
+const maskName=v=>String(v||'').replace(/\S+/g,w=>w.length<=2?star(w.length):w[0]+star(w.length-2)+w.slice(-1));
+const $=id=>document.getElementById(id), fmt=d=>d?new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}):'-';
+$('stepper').innerHTML=`<div class="sf-row">${STEPS.map((t,i)=>`<span class="sf-step ${ACT.includes(i)?'active':i<ACT[0]?'completed':''}"><span class="sf-dot" tabindex="0" aria-label="${t}"><span class="sf-tip">${t}</span></span></span>`).join('')}</div><div class="sf-info"><span class="sf-cnt">Tahap ${ACT[0]+1}-${ACT[1]+1}/${STEPS.length}</span><span class="sf-div"></span><span class="sf-lbl">${ACT.map(i=>STEPS[i]).join(' / ')}</span></div>`;
+const ARW='<svg width="14" height="12" viewBox="0 0 15 12" fill="#fff"><path d="M5.45 .24L.21 5.48a.75.75 0 000 1.06l5.2 5.24a.75.75 0 001.06-1.06L2.54 6.76h11.3a.75.75 0 000-1.5H2.57L6.55 1.3A.75.75 0 005.45.24z"/></svg>';
+$('thr').innerHTML=['NIK','Nama Lengkap','Alamat Lengkap','Status Penyerahan Bantuan','Progres Perbaikan (%)','Status','Aksi'].map(h=>`<th><div><span>${h}</span>${h==='Aksi'?'':ARW}</div></th>`).join('');
+
+const uniq=(k,f)=>[...new Set(D.filter(f||(()=>1)).map(x=>x[k]))];
+function opts(el,label,vals){const c=el.value;el.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option>${v}</option>`).join('');el.value=vals.includes(c)?c:'';el.classList.toggle('pl',!el.value);}
+function cascade(){opts($('kab'),'Kab/Kota',uniq('kab'));
+  opts($('kec'),'Kecamatan',uniq('kec',x=>!$('kab').value||x.kab===$('kab').value));
+  opts($('des'),'Desa/Kelurahan',uniq('des',x=>(!$('kab').value||x.kab===$('kab').value)&&(!$('kec').value||x.kec===$('kec').value)));}
+
+const prog=p=>{const on=[p!==null,p>=50,p>=100];
+  return `<button type="button" class="prog-btn" title="Lihat foto progres perbaikan"><div class="prog"><span class="n ${on[0]?'on':''}" data-t="0"></span><span class="l ${on[1]?'on':''}"></span><span class="n ${on[1]?'on':''}" data-t="50"></span><span class="l ${on[2]?'on':''}"></span><span class="n ${on[2]?'on':''}" data-t="100"></span></div>
+  <div class="prog-lbl"><span>0%</span><span>50%</span><span>100%</span></div></button>`;};
+
+function render(){
+  const q=$('q').value.trim().toLowerCase(),a=$('d1').value,b=$('d2').value;
+  const L=D.filter(x=>(!q||x.nama.toLowerCase().includes(q)||x.nik.includes(q))&&(!$('kab').value||x.kab===$('kab').value)&&(!$('kec').value||x.kec===$('kec').value)&&(!$('des').value||x.des===$('des').value)&&(!a||(x.tgl&&x.tgl>=a))&&(!b||(x.tgl&&x.tgl<=b)));
+  $('rows').innerHTML=L.map(x=>{const i=D.indexOf(x),mitra=x.serah==='MITRA';return `<tr>
+    <td class="mono">${maskNIK(x.nik)}</td><td><b>${maskName(x.nama)}</b></td><td>${x.alamat}</td>
+    <td><span class="badge ${mitra?'green':'orange'}">${mitra?'Mitra Penyerah':'Belum Diserahkan'}</span></td>
+    <td data-d="${i}">${prog(x.prog)}<div class="muted" style="margin-top:4px">Update terakhir: ${fmt(x.tgl)}</div></td>
+    <td><span class="badge blue">Lolos Verifikasi Lapangan</span></td>
+    <td><div class="acts"><button class="btn primary" ${mitra?'disabled title="Sudah diserahkan ke Mitra Penyerah"':''}>Update</button><button class="btn">Detail</button></div></td></tr>`}).join('');
+  $('empty').hidden=L.length>0; $('total').textContent=L.length;
+  const act=[q,a,b,$('kab').value,$('kec').value,$('des').value].some(Boolean);$('reset').disabled=!act;$('reset').classList.toggle('on',act);
+  // dialog foto dibuka dari kolom Progres Perbaikan; klik node = fokus tahap itu, klik area lain = tahap terakhir tercapai
+  document.querySelectorAll('td[data-d]').forEach(td=>td.onclick=e=>{const n=e.target.closest('[data-t]'),x=D[td.dataset.d];openDetail(x,n?+n.dataset.t:(x.prog??0))});
+}
+function openDetail(x,focus){
+  $('m-sub').textContent=`${maskName(x.nama)} · ${maskNIK(x.nik)}`;
+  $('m-body').innerHTML=`<div class="kv"><div><small>Nama Lengkap</small><b>${maskName(x.nama)}</b></div><div><small>Status Penyerahan Bantuan</small><b>${x.serah==='MITRA'?'Mitra Penyerah':'Belum Diserahkan'}</b></div><div style="grid-column:1/-1"><small>Alamat Lengkap</small><b>${x.alamat}</b></div></div>`+
+   [0,50,100].map(t=>{const n=x.foto[t];return `<div class="stage ${t===focus?'focus':''}" data-s="${t}"><h3>Tahap ${t===0?1:t===50?2:3} — ${t}%<span class="muted">${n} foto</span></h3><div class="photos">${n?Array.from({length:n},(_,k)=>`<div class="ph">Foto ${k+1} (placeholder)</div>`).join(''):'<div class="ph none">Belum ada foto untuk tahap ini</div>'}</div></div>`}).join('');
+  $('ov').classList.add('show');
+  $('m-body').querySelector('.stage.focus')?.scrollIntoView({block:'start'});
+}
+const close=()=>$('ov').classList.remove('show');
+$('mx').onclick=$('mc').onclick=close; $('ov').onclick=e=>{if(e.target===$('ov'))close()}; document.onkeydown=e=>{if(e.key==='Escape')close()};
+['q','d1','d2','des'].forEach(i=>$(i).oninput=render);
+$('kab').onchange=()=>{cascade();render()}; $('kec').onchange=()=>{cascade();render()};
+$('reset').onclick=()=>{$('q').value=$('d1').value=$('d2').value='';['kab','kec','des'].forEach(i=>$(i).value='');cascade();render()};
+cascade(); render();
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  PROTOTYPE STATIS — Report Usulan Masuk CMS Imah Aing: filter popup + kolom dinamis (plan 2026-10-27 §3 P3)
+  - BUKAN kode produksi. Data dummy, tanpa API. Hanya untuk review desain awal.
+  - Styling TABEL (header, sel, zebra, badge Status, masking, footer, empty state) meniru CMS asli.
+    Bagian lain (popup, chip, bar atas) tetap estimasi, bukan token resmi.
+  - Penyimpangan disengaja: header kolom dinamis dibuat lebih gelap (#0b7d44) sebagai penanda; tidak ada di asli.
+  - Dasar: halaman Report existing (sebelum: 5 select inline + date range + Reset + Export; tabel 7 kolom tetap).
+  ASUMSI (belum dikonfirmasi):
+   1. Tiap filter di popup = single-select (sama seperti BaseSelectSearch existing). Multi-select belum.
+   2. Kolom dinamis disisipkan SEBELUM kolom Status (Status tetap paling kanan), urutan sesuai urutan filter di popup.
+   3. Kab/Kota ikut jadi kolom dinamis (konsisten: 1 filter = 1 kolom). Di existing, Kab/Kota/Pola Ruang/Indeks Multi Bahaya selalu tampil; di prototype ini jadi dinamis.
+   4. Data Kumuh = filter baru, opsi dummy: Kumuh Berat / Sedang / Ringan / Tidak Kumuh (belum ada kontrak BE).
+   5. Date range, Status, Export Excel tetap di luar popup (hanya 5 filter plan yang dipindah). Status = kolom default, jadi tidak jadi kolom dinamis. Date range di sini hanya dekorasi (tidak memfilter).
+   6. Filter diterapkan hanya saat klik Terapkan; Reset di popup mengosongkan pilihan + langsung menerapkan.
+   7. Opsi Pola Ruang dipersingkat (subset POLA_RUANG_OPTIONS); Kab/Kota dummy.
+-->
+<title>Prototype — Report Usulan Masuk: Filter Popup + Kolom Dinamis</title>
+<meta name="proto:desc" content="Report usulan masuk di CMS: filter dipindah ke popup, tiap filter aktif menambah kolom dinamis di tabel">
+<meta name="proto:date" content="2026-10-27">
+<meta name="proto:tags" content="report,cms,filter">
+<style>
+  :root { --green:#069550; --green-50:#E8F6EE; --green-head:#10A760; --bg:#EFF2F3; --border:#E0E3E8; --text:#1F2937; --muted:#6B7280; --gray-50:#F3F4F6; --red:#DD5E5E; --red-50:#FDECEC; --yellow-50:#FEF3C7; --yellow:#92400E; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); font-family:Lato,Roboto,system-ui,sans-serif; color:var(--text); font-size:14px; }
+  .main { padding:20px 24px 48px; max-width:1200px; margin:0 auto; }
+  .crumb { font-size:12px; color:var(--muted); margin-bottom:4px; }
+  h1 { margin:0 0 4px; font-size:20px; } .desc { color:var(--muted); margin:0 0 16px; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .bar .sp { flex:1; }
+  .btn { border:1px solid var(--green); color:var(--green); background:#fff; border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+  .btn.primary { background:var(--green); color:#fff; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .fld { border:1px solid var(--border); border-radius:8px; padding:8px 10px; font:inherit; background:#fff; width:100%; }
+  .badge { display:inline-block; min-width:18px; padding:0 6px; margin-left:6px; border-radius:999px; background:var(--green); color:#fff; font-size:11px; line-height:18px; text-align:center; }
+  .btn.primary .badge { background:#fff; color:var(--green); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:4px; }
+  .fchip { background:var(--green-50); border:1px solid var(--green); color:var(--green); border-radius:999px; padding:3px 6px 3px 10px; font-size:12px; font-weight:700; display:inline-flex; gap:6px; align-items:center; }
+  .fchip button { border:0; background:none; color:var(--green); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+  .title { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; margin-bottom:12px; }
+  .title span { width:24px; height:24px; border:1px solid var(--green); background:var(--green-50); border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
+  .tw { overflow-x:auto; }
+  table { width:100%; min-width:100%; table-layout:fixed; border-collapse:collapse; font-family:Roboto,system-ui,sans-serif; }
+  thead tr { background:#069550; }
+  th { height:42px; min-width:120px; padding:8px 6px; border-right:1px solid #fff; text-align:left; font-size:14px; font-weight:700; text-transform:capitalize; color:#fff; }
+  th:last-child { border-right:0; border-top-right-radius:8px; } th:first-child { border-top-left-radius:8px; }
+  th.dyn { background:#0b7d44; }
+  tbody { background:#fff; color:#424242; }
+  td { padding:10px 8px; border:1px solid #eee; font-size:14px; }
+  tbody tr:nth-child(even) { background:#FAFAFA; }
+  .nik { font-weight:700; color:#083461; } .nm { font-family:Lato,Roboto,sans-serif; font-weight:700; color:#069550; }
+  .st { display:inline-block; border-radius:32px; padding:4px 10px; font-weight:600; font-size:14px; background:#F5F5F5; color:#212121; }
+  .st.g { color:#069550; } .st.r { color:#DD5E5E; } .st.y { color:#FF7500; }
+  .empty { text-align:center; padding:12px 16px; }
+  .foot { border:1px solid #069550; border-width:1px 1px 1px; border-top-color:#069550; background:#FAFAFA; color:#424242; font-size:14px; padding:12px; }
+  .overlay { position:fixed; inset:0; background:rgba(17,24,39,.5); display:none; align-items:center; justify-content:center; padding:16px; z-index:20; }
+  .overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:10px; width:100%; max-width:520px; max-height:90vh; display:flex; flex-direction:column; }
+  .m-head { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .m-head h2 { margin:0; font-size:16px; } .x { border:0; background:none; font-size:20px; cursor:pointer; color:var(--muted); }
+  .m-body { padding:16px 18px; overflow:auto; display:grid; gap:12px; }
+  .m-body label { font-size:12px; font-weight:700; color:var(--muted); display:block; margin-bottom:4px; }
+  .m-foot { display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; border-top:1px solid var(--border); }
+  .hint { font-size:12px; color:var(--muted); }
+  @media (max-width:640px){ .main{padding:12px;} }
+</style>
+</head>
+<body>
+<div class="main">
+  <div class="crumb">Daftar Pengusulan Masuk / Report Usulan Masuk</div>
+  <h1>Report Usulan Masuk</h1>
+  <p class="desc">Daftar usulan masuk berdasarkan informasi tata ruang dan kebencanaan</p>
+
+  <div class="card">
+    <div class="bar">
+      <input class="fld" style="max-width:260px" value="27/07/2026 - 27/10/2026" readonly title="Date range (dekorasi, tidak memfilter)">
+      <button class="btn" id="openFilter">Filter<span class="badge" id="fBadge" hidden>0</span></button>
+      <span class="sp"></span>
+      <button class="btn primary">Export to Excel</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="title"><span>&#9776;</span>Daftar Usulan Masyarakat</div>
+    <div class="tw"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+    <div class="foot" id="foot"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <div class="m-head"><h2 id="mt">Filter</h2><button class="x" id="closeM" aria-label="Tutup">&times;</button></div>
+    <div class="m-body" id="mbody"></div>
+    <div class="m-foot">
+      <span class="hint" style="flex:1;align-self:center">Tiap filter terpilih menambah 1 kolom di tabel.</span>
+      <button class="btn" id="resetBtn">Reset</button>
+      <button class="btn primary" id="applyBtn">Terapkan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Definisi filter = definisi kolom dinamis (key = field di data)
+const FILTERS = [
+  { key:'indeks', label:'Indeks Multi Bahaya', opts:['Tidak Terdampak','Rendah','Sedang','Tinggi'] },
+  { key:'penyebab', label:'Penyebab Rutilahu', opts:['Usia bangunan tua','Kesalahan konstruksi','Perawatan yang buruk','Hama dan jamur','Ketidaktersediaan prasarana dasar','Bencana'] },
+  { key:'polaRuang', label:'Pola Ruang', opts:['Badan air','Kawasan konservasi','Kawasan pertanian','Kawasan permukiman','Kawasan perikanan'] },
+  { key:'kota', label:'Kab/Kota', opts:['Kab. Bandung','Kab. Garut','Kota Bekasi','Kab. Tasikmalaya','Kota Bogor'] },
+  { key:'kumuh', label:'Data Kumuh', opts:['Kumuh Berat','Kumuh Sedang','Kumuh Ringan','Tidak Kumuh'] },
+];
+const ST = { 'Menunggu Verifikasi Data':'y', 'Lolos Verifikasi Data':'g', 'Ditolak':'r', 'Nominatif Provinsi':'g' };
+const D = [
+ ['3200000000000001','Dummy User 1','21/07/2026','Lolos Verifikasi Data','Tinggi','Usia bangunan tua','Kawasan permukiman','Kab. Bandung','Kumuh Berat'],
+ ['3200000000000002','Dummy User 2','22/07/2026','Menunggu Verifikasi Data','Sedang','Bencana','Kawasan pertanian','Kab. Garut','Kumuh Sedang'],
+ ['3200000000000003','Dummy User 3','25/07/2026','Ditolak','Rendah','Kesalahan konstruksi','Kawasan permukiman','Kota Bekasi','Tidak Kumuh'],
+ ['3200000000000004','Dummy User 4','02/08/2026','Nominatif Provinsi','Tinggi','Hama dan jamur','Badan air','Kab. Tasikmalaya','Kumuh Ringan'],
+ ['3200000000000005','Dummy User 5','09/08/2026','Lolos Verifikasi Data','Tidak Terdampak','Perawatan yang buruk','Kawasan permukiman','Kota Bogor','Tidak Kumuh'],
+ ['3200000000000006','Dummy User 6','15/08/2026','Menunggu Verifikasi Data','Sedang','Ketidaktersediaan prasarana dasar','Kawasan konservasi','Kab. Bandung','Kumuh Sedang'],
+ ['3200000000000007','Dummy User 7','30/08/2026','Lolos Verifikasi Data','Tinggi','Bencana','Kawasan permukiman','Kab. Garut','Kumuh Berat'],
+ ['3200000000000008','Dummy User 8','11/09/2026','Ditolak','Rendah','Usia bangunan tua','Kawasan perikanan','Kota Bekasi','Kumuh Ringan'],
+ ['3200000000000009','Dummy User 9','03/10/2026','Nominatif Provinsi','Sedang','Kesalahan konstruksi','Kawasan pertanian','Kab. Tasikmalaya','Tidak Kumuh'],
+ ['3200000000000010','Dummy User 10','20/10/2026','Menunggu Verifikasi Data','Tinggi','Hama dan jamur','Kawasan permukiman','Kota Bogor','Kumuh Berat'],
+].map(r => ({ nik:r[0], nama:r[1], tgl:r[2], status:r[3], indeks:r[4], penyebab:r[5], polaRuang:r[6], kota:r[7], kumuh:r[8] }));
+
+let applied = {};   // filter yang sedang aktif {key: value}
+const $ = id => document.getElementById(id);
+const maskNik = n => n.slice(0,4) + '*'.repeat(n.length-8) + n.slice(-4);
+const maskNama = s => s.replace(/\S+/g, w => w.length <= 2 ? '*'.repeat(w.length) : w[0] + '*'.repeat(w.length-2) + w.slice(-1));
+
+function render() {
+  const active = FILTERS.filter(f => applied[f.key]);          // urutan = urutan di popup
+  $('thead').innerHTML = '<tr><th>NIK</th><th>Nama Lengkap</th><th>Tanggal Usulan</th>' +
+    active.map(f => `<th class="dyn">${f.label}</th>`).join('') + '<th>Status</th></tr>';
+  const rows = D.filter(r => active.every(f => r[f.key] === applied[f.key]));
+  $('tbody').innerHTML = rows.length ? rows.map(r =>
+    `<tr><td><span class="nik">${maskNik(r.nik)}</span></td><td><span class="nm">${maskNama(r.nama)}</span></td><td>${r.tgl}</td>` +
+    active.map(f => `<td class="dyn">${r[f.key]}</td>`).join('') +
+    `<td><span class="st ${ST[r.status]||''}">${r.status}</span></td></tr>`).join('')
+    : `<tr><td class="empty" colspan="${4+active.length}">Tidak ada data</td></tr>`;
+  $('chips').innerHTML = active.map(f =>
+    `<span class="fchip">${f.label}: ${applied[f.key]}<button data-k="${f.key}" aria-label="Hapus filter ${f.label}">&times;</button></span>`).join('');
+  $('fBadge').hidden = !active.length; $('fBadge').textContent = active.length;
+  $('foot').innerHTML = `Tampilkan ${rows.length} Item dari total <b>${D.length}</b> (data dummy)`;
+}
+
+function buildModal() {
+  $('mbody').innerHTML = FILTERS.map(f =>
+    `<div><label for="f_${f.key}">${f.label}${f.key==='kumuh'?' <span class="badge" style="margin:0;background:#FF7500">Baru</span>':''}</label>
+     <select class="fld" id="f_${f.key}"><option value="">Semua</option>${f.opts.map(o=>`<option>${o}</option>`).join('')}</select></div>`).join('');
+}
+function syncModal() { FILTERS.forEach(f => $('f_'+f.key).value = applied[f.key] || ''); }
+const open = () => { syncModal(); $('overlay').classList.add('open'); };
+const close = () => $('overlay').classList.remove('open');
+
+$('openFilter').onclick = open;
+$('closeM').onclick = close;
+$('overlay').onclick = e => { if (e.target === $('overlay')) close(); };
+document.onkeydown = e => { if (e.key === 'Escape') close(); };
+$('applyBtn').onclick = () => { applied = {}; FILTERS.forEach(f => { const v = $('f_'+f.key).value; if (v) applied[f.key] = v; }); render(); close(); };
+$('resetBtn').onclick = () => { applied = {}; syncModal(); render(); close(); };
+$('chips').onclick = e => { const k = e.target.dataset.k; if (k) { delete applied[k]; render(); } };
+
+buildModal(); render();
+</script>
+</body>
+</html>
