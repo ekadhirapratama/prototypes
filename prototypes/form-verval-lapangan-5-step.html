@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — Form Verval Lapangan 5 Langkah (CMS Mobile)</title>
+<meta name="proto:desc" content="Form verifikasi lapangan 5 langkah (CMS mobile)">
+<meta name="proto:date" content="2026-11-02">
+<meta name="proto:tags" content="verval,cms,form">
+<style>
+  :root {
+    --green-600: #16A75C; --green-700: #069550; --green-50: #E8F6EE;
+    --bg: #EDEFF3; --card: #fff; --border: #E0E3E8; --text: #1F2937; --muted: #6B7280;
+    --red: #F44336; --red-50: #FFEBEE; --amber-50: #FFF8E1; --amber: #B26A00; --amber-500: #F5A623;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d9dce2; font-family: Lato, Roboto, system-ui, sans-serif; color: var(--text); }
+  .phone { max-width: 430px; min-height: 100vh; margin: 0 auto; background: var(--bg); position: relative; display: flex; flex-direction: column; }
+  @media (min-width: 640px) { .phone { margin: 24px auto; min-height: 800px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,.2); } }
+  .proto-note { font-size: 11px; background: #333; color: #fff; padding: 6px 12px; text-align: center; }
+  .proto-note button { background: none; border: 1px solid #888; color: #fff; border-radius: 4px; font-size: 11px; padding: 2px 6px; cursor: pointer; margin-left: 4px; }
+
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--green-600); color: #fff; display: flex; align-items: center; gap: 8px; padding: 12px; }
+  .topbar .back { background: rgba(255,255,255,.18); border: 0; color: #fff; width: 40px; height: 40px; border-radius: 10px; font-size: 20px; cursor: pointer; }
+  .topbar .t { flex: 1; min-width: 0; }
+  .topbar .t b { display: block; font-size: 15px; }
+  .topbar .t span { font-size: 12px; opacity: .9; }
+  .body { padding: 12px; flex: 1; padding-bottom: 24px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 8px; font-size: 14px; }
+  .kv { display: grid; grid-template-columns: 1fr; gap: 10px 12px; }
+  .kv small { display: block; color: var(--muted); font-size: 11px; }
+  .kv b { font-size: 13px; word-break: break-word; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--green-50); color: var(--green-700); }
+  .badge.warn { background: var(--amber-50); color: var(--amber); }
+  .badge.red { background: var(--red-50); color: #C62828; }
+  .rq { color: var(--red); }
+
+  .stepper { display: flex; align-items: center; gap: 4px; background: #fff; padding: 12px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .stepper::-webkit-scrollbar { display: none; }
+  .step { display: flex; align-items: center; gap: 8px; flex: none; font-size: 14px; color: #757575; font-family: Roboto, Lato, sans-serif; }
+  .step i { font-style: normal; width: 32px; height: 32px; flex: none; border-radius: 50%; background: #EEEEEE; color: #757575; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .step span { white-space: nowrap; }
+  .step.active { color: #000; } .step.active i { background: var(--green-600); color: #fff; }
+  .step.done { color: var(--green-700); } .step.done i { background: var(--green-700); color: #fff; }
+  .sep { color: #BDBDBD; flex: none; width: 20px; text-align: center; }
+
+  .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 16px; }
+  .btn { width: 100%; min-height: 46px; border-radius: 10px; border: 1.5px solid var(--green-700); background: var(--green-700); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn.sec { background: #fff; color: var(--green-700); }
+  .btn:disabled { background: #E0E0E0; border-color: #E0E0E0; color: #8a8a8a; cursor: not-allowed; }
+
+  /* form */
+  .fld { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; font: inherit; font-size: 14px; background: #fff; }
+  textarea.fld { height: 80px; padding: 10px; resize: vertical; }
+  .fld[readonly], .fld:disabled { background: #F3F4F6; color: #555; cursor: not-allowed; }
+  .fl { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+  .fg:first-child > .fl { margin-top: 0; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .rp { position: relative; } .rp b { position: absolute; left: 12px; top: 8px; font-size: 14px; color: var(--muted); } .rp .fld { padding-left: 38px; }
+  .inl { display: flex; gap: 8px; align-items: center; } .inl .unit { font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 48px; }
+  .emsg { display: none; color: var(--red); font-size: 12px; margin-top: 4px; }
+  .has-err > .emsg { display: block; }
+  .has-err > .fld, .has-err > .inl .fld, .has-err > .rp .fld { border-color: var(--red); }
+  .has-err > .tog button, .has-err > .rad { border-color: var(--red); }
+  .counter { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .callout { background: #F9FBFC; border: 1px solid #EFF1F3; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #374151; margin-bottom: 12px; line-height: 1.45; }
+  .callout.green { background: var(--green-50); border-color: #BFE5CF; color: var(--green-700); }
+  .callout.amber { background: var(--amber-50); border-color: #F5D58A; color: var(--amber); }
+  .okbanner { background: var(--green-50); border: 1px solid #BFE5CF; color: var(--green-700); font-size: 12px; font-weight: 700; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; }
+  .rad { display: flex; gap: 8px; border: 1px solid transparent; border-radius: 8px; }
+  .rad label { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; cursor: pointer; background: #fff; }
+  .rad label.on { background: var(--green-50); border-color: var(--green-600); color: var(--green-700); }
+
+  /* foto */
+  .banner { background: var(--amber-50); border-left: 4px solid var(--amber-500); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: var(--amber); margin-bottom: 12px; }
+  .slot { display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: center; }
+  .slot .pic { width: 88px; height: 88px; border: 2px dashed #C5CAD3; border-radius: 10px; display: grid; place-items: center; color: #9AA1AD; font-size: 24px; cursor: pointer; background-size: cover; background-position: center; position: relative; }
+  .slot .pic.has { border-style: solid; border-color: var(--green-600); color: transparent; }
+  .slot.has-err .pic { border-color: var(--red); }
+  .slot .pic small { position: absolute; bottom: 4px; font-size: 10px; color: var(--muted); }
+  .slot .pic.has small { display: none; }
+  .slot h4 { margin: 0; font-size: 13px; }
+  .slot p { margin: 2px 0 6px; font-size: 12px; color: var(--muted); }
+  .slot .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .link { background: none; border: 0; color: var(--green-700); font-weight: 700; font-size: 12px; padding: 8px 0; cursor: pointer; min-height: 36px; font-family: inherit; }
+  .link.red { color: var(--red); }
+  .progress-line { font-size: 12px; font-weight: 700; margin: 0 0 10px; }
+  .perr { color: var(--red); font-size: 12px; margin-top: 4px; }
+
+  /* indikator + skor */
+  .cat { font-size: 12px; font-weight: 800; letter-spacing: .04em; color: var(--green-700); margin: 14px 0 0; padding: 6px 10px; background: var(--green-50); border-radius: 6px; text-transform: uppercase; }
+  .subcat { font-size: 11px; font-weight: 800; color: var(--muted); margin: 10px 0 0; text-transform: uppercase; letter-spacing: .04em; }
+  .ind { padding: 12px 0; border-top: 1px solid #F0F1F4; }
+  .cat + .ind, .subcat + .ind { border-top: 0; }
+  .ind .top { display: flex; gap: 8px; margin-bottom: 8px; }
+  .ind .no { width: 24px; height: 24px; flex: none; border-radius: 6px; background: #EEE; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .ind h4 { margin: 0; font-size: 13px; }
+  .opts { display: grid; gap: 6px; border: 1px solid transparent; border-radius: 10px; }
+  .has-err > .opts { border-color: var(--red); padding: 4px; }
+  .opt { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: start; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; font-size: 12px; line-height: 1.4; cursor: pointer; background: #fff; }
+  .opt .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #BDBDBD; margin-top: 1px; }
+  .opt .sc { font-size: 11px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+  .opt.on.s1 { background: var(--green-50); border-color: var(--green-600); } .opt.on.s1 .dot { border-color: var(--green-600); background: radial-gradient(var(--green-600) 45%, transparent 50%); }
+  .opt.on.s3 { background: var(--amber-50); border-color: var(--amber-500); } .opt.on.s3 .dot { border-color: var(--amber-500); background: radial-gradient(var(--amber-500) 45%, transparent 50%); }
+  .opt.on.s5 { background: var(--red-50); border-color: var(--red); } .opt.on.s5 .dot { border-color: var(--red); background: radial-gradient(var(--red) 45%, transparent 50%); }
+  .opt.on .sc { color: var(--text); }
+  .sub { margin-top: 8px; }
+  .sub textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; resize: vertical; min-height: 56px; }
+  .has-err > textarea { border-color: var(--red); }
+
+  /* swadaya */
+  .mrow { padding: 12px 0; border-top: 1px solid #F0F1F4; }
+  .grp + .mrow, .mrow:first-of-type { border-top: 0; }
+  .mrow .mh b { font-size: 13px; display: block; } .mrow .mh small { font-size: 11px; color: var(--muted); }
+  .tog { display: flex; gap: 8px; margin: 8px 0 0; }
+  .tog button { flex: 1; min-height: 40px; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .tog button.on.y { background: var(--green-50); border-color: var(--green-600); color: var(--green-700); }
+  .tog button.on.n { background: #F3F4F6; border-color: #9AA1AD; color: #374151; }
+  .mini { display: flex; gap: 10px; align-items: center; }
+  .mini .th { width: 56px; height: 56px; border-radius: 8px; background: #ddd center/cover; flex: none; border: 1px solid var(--green-600); }
+  .mini .addph { border: 1.5px dashed #C5CAD3; border-radius: 10px; min-height: 40px; padding: 0 12px; background: #fff; color: var(--green-700); font-weight: 700; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .has-err > .mini .addph { border-color: var(--red); }
+  .mgrid { display: grid; grid-template-columns: 1fr; gap: 8px 10px; align-items: center; margin-top: 8px; }
+  .mgrid > * { grid-column: 1; }
+  .mgrid .sub { margin-top: 0; }
+  .mgrid .slot { grid-column: 1 / -1; grid-template-columns: 72px 1fr; }
+  .mgrid .slot .pic { width: 72px; height: 72px; }
+  .total { border-radius: 12px; background: #0C6B3D; color: #fff; padding: 14px; margin-bottom: 12px; }
+  .total small { opacity: .85; font-size: 11px; } .total b { display: block; font-size: 24px; margin: 2px 0 6px; }
+  .total .chip { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 8px; background: rgba(255,255,255,.2); }
+
+  /* langkah 5 */
+  .res { display: grid; gap: 6px; font-size: 12px; }
+  .res .r { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid #F0F1F4; }
+  .res .r:last-child { border: 0; } .res .r span { color: var(--muted); } .res .r b { text-align: right; }
+  .res .bad { color: #C62828; } .res .ok { color: var(--green-700); }
+  .score { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 8px; } .score b { font-size: 28px; } .score span { color: var(--muted); font-size: 13px; }
+  .rc { border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: #fff; }
+  .rc .hd { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .rc .hd .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #BDBDBD; flex: none; margin-top: 2px; }
+  .rc .hd b { font-size: 14px; display: block; } .rc .hd small { font-size: 12px; color: var(--muted); }
+  .rc.on { border-color: var(--green-600); background: #FBFEFC; } .rc.on .hd .dot { border-color: var(--green-600); background: radial-gradient(var(--green-600) 45%, transparent 50%); }
+  .rc.on.tolak { border-color: var(--red); } .rc.on.tolak .hd .dot { border-color: var(--red); background: radial-gradient(var(--red) 45%, transparent 50%); }
+  .rc .body2 { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .chk, .rop { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; padding: 8px 0; cursor: pointer; }
+  .chk input, .rop input { margin-top: 2px; width: 18px; height: 18px; flex: none; }
+  .rop { border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 6px; }
+  .rop.on { border-color: var(--green-600); background: var(--green-50); }
+  .pakta { background: #E8F0FE; border-radius: 10px; padding: 12px; font-size: 13px; font-style: italic; line-height: 1.5; margin-bottom: 12px; }
+  .pakta small { display: block; font-style: normal; color: var(--muted); font-size: 11px; margin-top: 6px; }
+  .sig { margin-bottom: 14px; }
+  .sig h4 { margin: 0 0 2px; font-size: 13px; } .sig .who { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .sig canvas { width: 100%; height: 150px; display: block; border: 1.5px dashed #9AA1AD; border-radius: 10px; background: #fff; touch-action: none; cursor: crosshair; }
+  .has-err > canvas { border-color: var(--red); }
+  .sig.wait .box { height: 70px; border: 1.5px dashed #C5CAD3; border-radius: 10px; display: grid; place-items: center; color: var(--muted); font-size: 12px; background: #F9FAFB; }
+  .doc2 { display: grid; gap: 8px; }
+  .doc2 button { min-height: 40px; border-radius: 10px; border: 1.5px solid var(--border); background: #F3F4F6; color: #8a8a8a; font-weight: 700; font-size: 12px; font-family: inherit; }
+
+  /* dialog */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .overlay.show { display: flex; }
+  .dlg { background: #fff; border-radius: 8px; width: 100%; max-width: 430px; overflow: hidden; }
+  .dlg .hd { padding: 8px 24px; } .dlg .hd h1 { margin: 12px 0 0; font: 700 21px Roboto, Lato, sans-serif; color: #008444; }
+  .dlg .bd { padding: 24px; font-size: 14px; color: #424242; }
+  .dlg .bd.info { display: flex; align-items: center; gap: 12px; padding: 16px 24px 40px; }
+  .dlg .ft { background: #FAFAFA; padding: 16px 24px; display: flex; justify-content: flex-end; gap: 16px; }
+  .dlg .ft.center { justify-content: center; }
+  .dlg .ft button { min-height: 38px; padding: 9px 16px; border-radius: 8px; font: 700 14px Lato, Roboto, sans-serif; cursor: pointer; border: 1.5px solid #069550; background: #069550; color: #fff; }
+  .dlg .ft button.sec { background: #fff; color: #008444; border-color: #008444; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="proto-note">Prototype — data dummy, belum terhubung API
+    <button onclick="fillDemo()">Isi contoh</button><button onclick="resetAll()">Reset</button></div>
+  <div class="topbar">
+    <button class="back" onclick="showInfo('Kembali ke Detail','Di fitur nyata tombol ini membawa kembali ke detail usulan. (mock)','Tutup')" aria-label="Kembali ke detail">‹</button>
+    <div class="t"><b>Verval Lapangan</b><span>IMA-2026-001234</span></div>
+  </div>
+  <div class="stepper" id="stepper"></div>
+  <div class="body">
+    <div id="pane"></div>
+    <div class="actions">
+      <button class="btn" id="btnNext" onclick="next()">Lanjutkan</button>
+      <button class="btn sec" id="btnBack" onclick="prev()">Kembali</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirm">
+  <div class="dlg">
+    <div class="hd"><h1 id="cfTitle"></h1></div>
+    <div class="bd" id="cfMsg"></div>
+    <div class="ft"><button class="sec" onclick="closeConfirm()">Batalkan</button><button onclick="submitForm()">Iya, Kirim</button></div>
+  </div>
+</div>
+<div class="overlay" id="info">
+  <div class="dlg">
+    <div class="hd"><h1 id="inTitle"></h1></div>
+    <div class="bd info">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="flex:none"><circle cx="12" cy="12" r="11" fill="#069550"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><span id="inMsg"></span><br><small id="inSub" style="color:var(--muted)"></small></span>
+    </div>
+    <div class="ft center"><button id="inBtn" onclick="closeInfo()">Tutup</button></div>
+  </div>
+</div>
+<input type="file" id="fileIn" accept="image/jpeg,image/png" hidden>
+
+<script>
+/* ===== data ===== */
+const STEPS = ['Data Diri', 'Foto (9)', 'Penilaian', 'Swadaya', 'Kesimpulan'];
+const MAX_MB = 5;
+const PHOTOS = [
+  ['Perspektif 45°', 'Tampak serong 45° keseluruhan bangunan', true],
+  ['Tampak Depan', 'Fasad depan tegak lurus pintu utama'],
+  ['Tampak Samping', 'Dinding samping dan talang atap rumah'],
+  ['Tampak Belakang', 'Dinding belakang atau batas area tanah'],
+  ['Ruang Keluarga', 'Area berkumpul dan ketinggian plafon'],
+  ['MCK / Jamban', 'Sanitasi, kloset jongkok, dan bak air'],
+  ['Kamar Tidur', 'Ruang istirahat dan luas lantai tidur'],
+  ['Dapur', 'Area memasak dan ketersediaan air'],
+  ['Ruang yang Direhab', 'Fokus titik prioritas kerusakan berat'],
+];
+const DOCS = [
+  ['Surat Keterangan Miskin/Tidak Mampu', 'Foto surat keterangan tidak mampu resmi, bertanda tangan & cap RT/RW setempat.'],
+  ['Kartu Keluarga', 'Foto Kartu Keluarga terbaru yang jelas dan terbaca.'],
+  ['Surat Keterangan Kepemilikan Tanah', 'Foto Sertifikat Hak Milik (SHM) / Girik / Surat Keterangan Riwayat Tanah dari Desa/Kelurahan.'],
+];
+// opsi contoh — daftar resmi menunggu PO (P5)
+const KATEGORI = ['Rumah Berpenghuni', 'Rumah Tidak Berpenghuni', 'Rumah Sewa / Kontrak'];
+const LAHAN = ['Milik Sendiri', 'Milik Keluarga / Orang Tua', 'Tanah Negara / Sewa'];
+
+// skor 1 = ada/cukup, 3 = sebagian, 5 = tidak ada (konfirmasi 2026-11-02). Indikator 10 hanya 1 / 5.
+const STR = [['Ada, kondisi baik, kokoh', 1], ['Ada, sebagian rapuh, tidak kokoh', 3], ['Tidak ada, seluruhnya rapuh', 5]];
+const IND = [
+  { g: 'I. Keselamatan Bangunan', sg: 'A. Komponen Struktural', no: 1, t: 'Pondasi Rumah', o: STR },
+  { sg: '', no: 2, t: 'Sloof', o: STR },
+  { no: 3, t: 'Tiang / Kolom Penyangga', o: STR },
+  { no: 4, t: 'Balok Pengikat', o: STR },
+  { no: 5, t: 'Rangka Kuda-Kuda Atap', o: STR },
+  { sg: 'B. Komponen Nonstruktural', no: 6, t: 'Dinding Pengisi', o: [
+    ['Tembok/setengah tembok diplester, papan kayu berkualitas, bahan dinding kondisi kokoh dan kedap air', 1],
+    ['Tembok sebagian besar retak, papan atau bahan lain yang kurang kokoh dan tidak kedap air', 3],
+    ['Anyaman bambu tipis, triplek, papan, tembok, atau bahan lain yang rapuh dan tidak kedap air', 5]] },
+  { no: 7, t: 'Lantai Rumah', o: [
+    ['Plester/ubin/keramik/papan/bahan lain kondisi baik, kedap air', 1],
+    ['Papan atau bahan lain kondisi rusak, plester sebagian besar pecah', 3],
+    ['Tanah, papan atau bahan lain yang rapuh dan tidak kedap air', 5]] },
+  { no: 8, t: 'Penutup Atap (Genteng)', o: [
+    ['Genteng/seng/spandek, bahan tradisional (ijuk/rumbia)/bahan lain kondisi baik, tidak bocor', 1],
+    ['Genteng/seng/spandek, bahan tradisional/bahan lain rusak sebagian, bocor jika hujan lebat', 3],
+    ['Asbes, bahan non asbes kondisi rusak berat, sering bocor jika hujan, rawan ambruk', 5]] },
+  { no: 9, t: 'Kusen Pintu & Jendela', o: [
+    ['Kusen dan daun jendela masih kokoh, tidak keropos, tidak dimakan rayap, tidak busuk, tidak melengkung', 1],
+    ['Kusen atau jendela rusak parsial yang belum mengganggu struktur utama dinding', 3],
+    ['Kusen dan jendela sudah mengalami kerusakan struktural yang parah', 5]] },
+  { g: 'II. Kesehatan, Kecukupan Luas & Sanitasi', sg: '', no: 10, t: 'Standar Luas Min. 7,2 m² / Jiwa', o: [
+    ['Luas rumah dibagi jumlah penghuni, lebih atau sama dengan 7,2 m²', 1],
+    ['Luas rumah dibagi jumlah penghuni, kurang dari 7,2 m²', 5]] },
+  { no: 11, t: 'Pencahayaan Alami (Min. 10% Luas Lantai)', o: [
+    ['Terang, dapat membaca normal tanpa pencahayaan buatan pada siang hari', 1],
+    ['Kurang terang, perlu pencahayaan buatan pada siang hari untuk membaca normal', 3],
+    ['Gelap, tidak dapat membaca tanpa pencahayaan buatan pada siang hari', 5]] },
+  { no: 12, t: 'Penghawaan & Sirkulasi Udara (Min. 5%)', o: [
+    ['Cukup ventilasi, sirkulasi udara baik', 1], ['Ventilasi kurang, agak pengap', 3], ['Tidak ada ventilasi, pengap, lembab', 5]] },
+  { no: 13, t: 'Ketersediaan Sanitasi & MCK Sehat', o: [
+    ['Ada septictank, kamar mandi berfungsi', 1], ['Ada septictank, kamar mandi rusak, kurang berfungsi', 3], ['Tidak ada', 5]] },
+];
+// pengelompokan ringkasan Bagian B Langkah 5 (aturan resmi menunggu PO — plan §2 item 4)
+const KOMP = [['Struktur', [1, 2, 3, 4, 5]], ['Dinding, lantai, atap & kusen', [6, 7, 8, 9]], ['Kecukupan ruang', [10]], ['Kesehatan & sanitasi', [11, 12, 13]]];
+const MAT_LAMA = [['ma0', 'Kayu', 'Balok kayu, kusen, daun pintu & jendela', 'batang'], ['ma1', 'Genteng', '', 'buah'], ['ma2', 'Batu Bata Merah', '', 'buah'], ['ma3', 'Batu Kali / Pondasi', '', 'm³'], ['ma4', 'Seng / Asbes utuh', '', 'lembar']];
+const MAT_BARU = [['mb0', 'Kayu Baru / Usuk', '', 'batang'], ['mb1', 'Genteng Baru', '', 'buah'], ['mb2', 'Batu Bata / Batako', '', 'buah'], ['mb3', 'Pasir Pasang', '', 'm³'], ['mb4', 'Kerikil / Split Cor', '', 'm³'], ['mb5', 'Semen Portland (PC)', '', 'sak'], ['mb6', 'Besi Beton 8 mm', '', 'batang']];
+const UANG = [['u0', 'Tabungan Pribadi', 'Disimpan tunai atau rekening bank'], ['u1', 'Hasil Jual Panen / Ternak', 'Estimasi panen padi / hewan ternak sebelum pengerjaan'], ['u2', 'Bantuan Keluarga / Kerabat', 'Sumbangan tunai sanak famili / perantau'], ['u3', 'Lainnya', 'Sumber dana lain', true]];
+const TK = [['t0', 'Tenaga Sendiri', 'CPB atau anggota keluarga serumah'], ['t1', 'Dukungan Keluarga', 'Saudara kandung, keponakan, ipar'], ['t2', 'Dukungan Tetangga / Kerabat', 'Gotong royong lingkungan RT/RW'], ['t3', 'Lainnya', 'Organisasi kemasyarakatan / karang taruna', true]];
+const MIN_SWADAYA = 2000000; // angka contoh dari frame — sumber dan aturan menunggu PO (P3)
+const PROG = ['BSPS Kementerian PKP / PUPR', 'Bantuan Rumah Korban Bencana (BPBD Jabar)', 'Program Relokasi / Kawasan Kumuh Terpadu', 'Program CSR Kemitraan Swasta / BAZNAS Jabar'];
+const ALASAN = ['Belum memiliki KK sendiri', 'Memiliki rumah > 1 unit', 'Tanah bersengketa / tanpa bukti sah', 'Rumah ditinggali < 1 tahun / tidak ditinggali', 'Pernah menerima bantuan dalam 5 tahun terakhir', 'Meninggal dunia tanpa ahli waris', 'Rumah layak huni / rusak ringan', 'Menolak menandatangani pakta integritas swadaya'];
+const MAXC = 255;
+
+/* ===== state ===== */
+const blank = () => ({
+  step: 1, show: false, perr: {}, photos: {},
+  f: { nama: 'Kus****** Per****', gaji: '1.250.000', hp: '0812****2190', alamat: 'Kp. ****** *******, RT ** / RW **', kategori: '', lama: '', satu: '', lahan: '', lahanNo: '' },
+  ans: {}, note: {}, mat: {}, uang: {}, tk: {},
+  d1: '', d2: '', rek: '', skema: '', prog: '', justif: '', alasan: {},
+});
+let S = blank();
+const SIG = { cpb: [], tpm: [] };
+let pickKey = null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const num = (v) => Number(String(v || '').replace(/\D/g, '')) || 0;
+const rp = (n) => 'Rp ' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const RQ = '<span class="rq">*</span>';
+const MASK_NIK = '3277********0003';
+
+/* ===== validasi — semua field wajib (plan §2 "Aturan isian wajib") ===== */
+const REQ = 'Wajib diisi.', PICK = 'Pilih salah satu.', PHOTO = 'Foto wajib diunggah.';
+function validate(step) {
+  const e = {}; const f = S.f;
+  if (step === 1) {
+    ['nama', 'gaji', 'hp', 'alamat', 'lahanNo'].forEach((k) => { if (!String(f[k]).trim()) e[k] = REQ; });
+    if (!f.kategori) e.kategori = PICK;
+    if (!num(f.lama)) e.lama = REQ;
+    if (!f.satu) e.satu = PICK;
+    if (!f.lahan) e.lahan = PICK;
+    DOCS.forEach((_, i) => { if (!S.photos['d' + i]) e['d' + i] = PHOTO; });
+  } else if (step === 2) {
+    PHOTOS.forEach((_, i) => { if (!S.photos['p' + i]) e['p' + i] = PHOTO; });
+  } else if (step === 3) {
+    IND.forEach(({ no }) => {
+      if (!S.ans[no]) e['i' + no] = PICK;
+      else if (S.ans[no] > 1 && !String(S.note[no] || '').trim()) e['n' + no] = 'Keterangan wajib diisi untuk skor ' + S.ans[no] + '.';
+    });
+  } else if (step === 4) {
+    [...MAT_LAMA, ...MAT_BARU].forEach(([k]) => {
+      const m = S.mat[k] || {};
+      if (!m.a) e['r_' + k] = PICK;
+      else if (m.a === 'y') { if (!num(m.q)) e['q_' + k] = 'Jumlah wajib diisi.'; if (!S.photos['f_' + k]) e['f_' + k] = PHOTO; }
+    });
+    UANG.forEach(([k, , , other]) => {
+      const m = S.uang[k] || {};
+      if (!m.a) e['r_' + k] = PICK;
+      else if (m.a === 'y') { if (!num(m.v)) e['v_' + k] = 'Nilai wajib diisi.'; if (other && !String(m.nm || '').trim()) e['nm_' + k] = 'Nama sumber wajib diisi.'; }
+    });
+    TK.forEach(([k, , , other]) => {
+      const m = S.tk[k] || {};
+      if (!m.a) e['r_' + k] = PICK;
+      else if (m.a === 'y') {
+        if (other && !String(m.nm || '').trim()) e['nm_' + k] = 'Nama sumber wajib diisi.';
+        if (!String(m.k || '').trim()) e['k_' + k] = 'Nama / keterangan relawan wajib diisi.';
+        if (!num(m.j)) e['j_' + k] = 'Jumlah orang wajib diisi.';
+      }
+    });
+  } else {
+    if (!S.d1.trim()) e.d1 = REQ;
+    if (!S.d2.trim()) e.d2 = REQ;
+    if (!S.rek) e.rek = 'Pilih salah satu rekomendasi.';
+    if (S.rek === 'lolos') {
+      if (!S.skema) e.skema = PICK;
+      if (!SIG.cpb.length) e.cpb = 'Tanda tangan CPB wajib diisi.';
+      if (!SIG.tpm.length) e.tpm = 'Tanda tangan TPM wajib diisi.';
+    }
+    if (S.rek === 'dialih') { if (!S.prog) e.prog = PICK; if (!S.justif.trim()) e.justif = REQ; }
+    if (S.rek === 'tolak' && !Object.values(S.alasan).some(Boolean)) e.alasan = 'Pilih minimal satu alasan.';
+  }
+  return e;
+}
+function paintErrors() {
+  const errs = validate(S.step);
+  document.querySelectorAll('#pane [data-k]').forEach((el) => {
+    const m = errs[el.dataset.k]; el.classList.toggle('has-err', !!m);
+    const em = el.querySelector(':scope > .emsg'); if (em) em.textContent = m || '';
+  });
+  return errs;
+}
+const touch = () => { if (S.show) paintErrors(); };
+
+/* ===== builder ===== */
+const fg = (k, label, inner, hint) => `<div class="fg" data-k="${k}"><label class="fl">${label} ${RQ}</label>${inner}${hint ? `<div class="hint">${hint}</div>` : ''}<div class="emsg"></div></div>`;
+const inp = (k, v, extra = '') => `<input class="fld" value="${esc(v)}" oninput="setF('${k}',this.value)" ${extra}>`;
+const selOpts = (list, v) => `<option value="">Pilih</option>` + list.map((o) => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('');
+
+function photoBox(k, title, desc, main) {
+  const p = S.photos[k];
+  return `<div class="card slot" data-k="${k}">
+    <div class="pic ${p ? 'has' : ''}" style="${p ? `background-image:url(${p.url})` : ''}" onclick="pick('${k}')" role="button" aria-label="Unggah ${esc(title)}">＋<small>Tambah</small></div>
+    <div><h4>${title}${main ? ' <span class="badge">Foto Utama</span>' : ''} ${RQ}</h4><p>${desc}</p>
+      <div class="acts">${p ? `<button class="link" onclick="window.open(S.photos['${k}'].url)">Perbesar</button><button class="link" onclick="pick('${k}')">Ganti</button><button class="link red" onclick="delPhoto('${k}')">Hapus</button><span style="font-size:11px;color:var(--muted);align-self:center">${p.size} MB</span>` : ''}</div>
+      ${S.perr[k] ? `<div class="perr">${S.perr[k]}</div>` : ''}<div class="emsg"></div></div></div>`;
+}
+const matPhoto = (k) => {
+  const p = S.photos[k];
+  return `<div class="slot" data-k="${k}">
+    <div class="pic ${p ? 'has' : ''}" style="${p ? `background-image:url(${p.url})` : ''}" onclick="pick('${k}')" role="button" aria-label="Unggah foto bukti">＋<small>Tambah</small></div>
+    <div><h4>Foto bukti ${RQ}</h4>${p ? `<div class="acts"><button class="link" onclick="window.open(S.photos['${k}'].url)">Perbesar</button><button class="link" onclick="pick('${k}')">Ganti</button><button class="link red" onclick="delPhoto('${k}')">Hapus</button><span style="font-size:11px;color:var(--muted);align-self:center">${p.size} MB</span></div>` : ''}
+      ${S.perr[k] ? `<div class="perr">${S.perr[k]}</div>` : ''}<div class="emsg"></div></div></div>`;
+};
+const tog = (grp, k, a) => `<div class="tog"><button class="y ${a === 'y' ? 'on' : ''}" onclick="setAda('${grp}','${k}','y')">Ada</button><button class="n ${a === 'n' ? 'on' : ''}" onclick="setAda('${grp}','${k}','n')">Tidak</button></div>`;
+
+/* ----- pane per langkah ----- */
+function pane1() {
+  const f = S.f;
+  return `
+  <div class="card">
+    <h3>Data Diri Penerima Manfaat</h3>
+    <div class="hint" style="margin-bottom:10px">Terisi otomatis dari usulan. Koreksi bila hasil lapangan berbeda.</div>
+    <div class="okbanner">✔ Dukcapil Terverifikasi</div>
+    <div class="fg"><label class="fl">Nomor KTP / NIK</label><input class="fld" value="${MASK_NIK}" readonly><div class="hint">16 digit. Tidak dapat diubah.</div></div>
+    ${fg('nama', 'Nama Penerima Manfaat', inp('nama', f.nama))}
+    ${fg('gaji', 'Penghasilan per Bulan', `<div class="rp"><b>Rp</b><input class="fld" value="${esc(f.gaji)}" inputmode="numeric" oninput="fmtRp(this);setF('gaji',this.value)"></div>`)}
+    ${fg('hp', 'Nomor HP / WhatsApp', inp('hp', f.hp, 'inputmode="tel"'))}
+    ${fg('alamat', 'Alamat Lengkap Rumah', `<textarea class="fld" oninput="setF('alamat',this.value)">${esc(f.alamat)}</textarea>`)}
+    <div class="fg"><label class="fl">Kabupaten / Kota</label><input class="fld" value="Kota Bandung" disabled></div>
+    <div class="fg"><label class="fl">Kecamatan</label><input class="fld" value="Bojongloa Kidul" disabled></div>
+    <div class="fg"><label class="fl">Kelurahan</label><input class="fld" value="Cibaduyut" disabled></div>
+    ${fg('kategori', 'Kategori Rumah Usulan', `<select class="fld" onchange="setF('kategori',this.value)">${selOpts(KATEGORI, f.kategori)}</select>`, 'Status hunian fisik saat verifikasi faktual lapangan. Opsi contoh, daftar resmi menunggu PO.')}
+    ${fg('lama', 'Lama Menempati Rumah yang Diusulkan', `<div class="inl"><input class="fld" value="${esc(f.lama)}" inputmode="numeric" oninput="this.value=this.value.replace(/\\D/g,'');setF('lama',this.value)"><span class="unit">Tahun</span></div>`)}
+    ${fg('satu', 'Apakah rumah yang diusulkan merupakan rumah satu-satunya?', `<div class="rad">${[['y', 'Ya (satu-satunya)'], ['n', 'Tidak']].map(([v, t]) => `<label class="${f.satu === v ? 'on' : ''}" onclick="setR('satu','${v}')">${t}</label>`).join('')}</div>`, 'Kriteria kepemilikan tunggal menjadi salah satu syarat mutlak prioritas bantuan Rutilahu.')}
+    ${fg('lahan', 'Status Kepemilikan Lahan', `<select class="fld" onchange="setF('lahan',this.value)">${selOpts(LAHAN, f.lahan)}</select>`, 'Opsi contoh, daftar resmi menunggu PO.')}
+    ${fg('lahanNo', 'Nomor Bukti Kepemilikan Lahan', inp('lahanNo', f.lahanNo, 'placeholder="mis. AJB No. 42/2011"'))}
+  </div>
+  <div class="card">
+    <h3>Berkas Dokumen Pendukung ${RQ}</h3>
+    <div class="hint" style="margin:-4px 0 10px">Foto dokumen di lapangan. Format .jpg .jpeg .png · maks ${MAX_MB} MB per berkas.</div>
+    ${DOCS.map((d, i) => photoBox('d' + i, d[0], d[1])).join('')}
+    <div class="callout green" style="margin:0">Data calon penerima telah disinkronkan dengan basis data pendaftaran Sipadek &amp; Sapawarga Jabar. Pastikan validasi fisik saat pengecekan lapangan sesuai.</div>
+  </div>`;
+}
+function pane2() {
+  const n = PHOTOS.filter((_, i) => S.photos['p' + i]).length;
+  return `<div class="banner">Format .jpg .jpeg .png · maks ${MAX_MB} MB per foto. Semua 9 foto wajib diisi.</div>
+  <p class="progress-line">Foto terunggah: ${n} / ${PHOTOS.length}</p>
+  ${PHOTOS.map((p, i) => photoBox('p' + i, `${i + 1}. ${p[0]}`, p[1], p[2])).join('')}`;
+}
+function pane3() {
+  const main = S.photos.p0, f = S.f;
+  let html = `<div class="card"><h3>Bagian A — Ringkasan Objek Penilaian</h3><div class="kv">
+    <div><small>Nomor Induk Kependudukan (NIK)</small><b>${MASK_NIK}</b></div>
+    <div><small>Nama Calon Penerima Manfaat</small><b>${esc(f.nama)}</b></div>
+    <div><small>Penghasilan Rata-Rata Bulanan</small><b style="color:var(--green-700)">Rp ${esc(f.gaji)} / bulan</b></div>
+    <div><small>Status Kepemilikan Lahan</small><b>${f.lahan ? `${esc(f.lahan)}${f.lahanNo ? ` (${esc(f.lahanNo)})` : ''}` : '-'}</b></div>
+    <div><small>Alamat Domisili Fisik</small><b>${esc(f.alamat)}, Cibaduyut, Bojongloa Kidul, Kota Bandung</b></div></div>
+    <div style="height:150px;border-radius:10px;background:#DDE1E7 center/cover;${main ? `background-image:url(${main.url});` : ''}display:grid;place-items:center;color:var(--muted);font-size:12px;margin-top:12px">${main ? '' : 'Foto utama belum diunggah'}</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px"><span>Foto 01: Perspektif 45°</span>${main ? `<button class="link" style="padding:0;min-height:0" onclick="window.open(S.photos.p0.url)">Perbesar</button>` : ''}</div></div>
+  <div class="card"><h3>Bagian B — Tabel Penilaian Kondisi Rumah Fisik</h3>
+  <div class="callout amber" style="margin:0 0 4px">Skor tiap pilihan: 1 = ada / cukup, 3 = sebagian, 5 = tidak ada. Makin tinggi, makin parah.</div>`;
+  IND.forEach((d) => {
+    if (d.g) html += `<div class="cat">${d.g}</div>`;
+    if (d.sg) html += `<div class="subcat">${d.sg}</div>`;
+    const a = S.ans[d.no];
+    html += `<div class="ind" data-k="i${d.no}"><div class="top"><div class="no">${d.no}</div><div><h4>${d.t} ${RQ}</h4></div></div>
+      <div class="opts">${d.o.map(([t, sc]) => `<div class="opt s${sc} ${a === sc ? 'on' : ''}" onclick="setAns(${d.no},${sc})" role="radio" aria-checked="${a === sc}"><span class="dot"></span><span>${t}</span><span class="sc">Skor ${sc}</span></div>`).join('')}</div>
+      <div class="emsg"></div>
+      ${a > 1 ? `<div class="sub" data-k="n${d.no}"><textarea maxlength="${MAXC}" placeholder="Keterangan kondisi fisik (wajib)" oninput="setNote(${d.no},this.value)">${esc(S.note[d.no] || '')}</textarea><div class="emsg"></div></div>` : ''}</div>`;
+  });
+  return html + '</div>';
+}
+function pane4() {
+  let h = `<div class="total"><small>Total Akumulasi Swadaya — Dana Kas Tersedia CPB</small><b id="totKas">${rp(totalKas())}</b><span class="chip" id="totChip"></span>
+    <div style="font-size:11px;opacity:.8;margin-top:6px">Syarat minimum ${rp(MIN_SWADAYA)} — angka contoh, aturan menunggu PO.</div></div>`;
+  const mat = (title, sub, list) => {
+    let s = `<div class="card"><h3>${title}</h3><div class="hint" style="margin:-4px 0 4px">${sub}</div>`;
+    list.forEach(([k, t, d, u]) => {
+      const m = S.mat[k] || {};
+      s += `<div class="mrow" data-k="r_${k}"><div class="mh"><b>${t}</b>${d ? `<small>${d}</small>` : ''}</div>${tog('mat', k, m.a)}<div class="emsg"></div>
+        ${m.a === 'y' ? `<div class="mgrid"><div class="sub" data-k="q_${k}"><div class="inl"><input class="fld" inputmode="numeric" placeholder="Jumlah" value="${esc(m.q || '')}" oninput="this.value=this.value.replace(/\\D/g,'');setSub('mat','${k}','q',this.value)"><span class="unit">${u}</span></div><div class="emsg"></div></div>${matPhoto('f_' + k)}</div>` : ''}</div>`;
+    });
+    return s + '</div>';
+  };
+  h += mat('A. Barang / Material — Eksisting / Bekas Layak Pakai', 'Material bongkaran yang masih dapat direkondisi. Satuan contoh.', MAT_LAMA);
+  h += mat('A. Barang / Material — Baru / Stok Pembelian Sendiri', 'Material baru yang sudah dicicil atau disediakan CPB. Satuan contoh.', MAT_BARU);
+  h += `<div class="card"><h3>B. Uang (Tabungan / Finansial Swadaya)</h3><div class="hint" style="margin:-4px 0 4px">Kapasitas pendampingan dana kas riil milik calon penerima bantuan.</div>`;
+  UANG.forEach(([k, t, d, other]) => {
+    const m = S.uang[k] || {};
+    h += `<div class="mrow" data-k="r_${k}"><div class="mh"><b>${t}</b><small>${d}</small></div>${tog('uang', k, m.a)}<div class="emsg"></div>
+      ${m.a === 'y' ? `${other ? `<div class="sub" data-k="nm_${k}"><input class="fld" placeholder="Nama sumber dana" value="${esc(m.nm || '')}" oninput="setSub('uang','${k}','nm',this.value)"><div class="emsg"></div></div>` : ''}
+      <div class="sub" data-k="v_${k}"><div class="rp"><b>Rp</b><input class="fld" inputmode="numeric" placeholder="Nilai" value="${esc(m.v || '')}" oninput="fmtRp(this);setSub('uang','${k}','v',this.value);updTot()"></div><div class="emsg"></div></div>` : ''}</div>`;
+  });
+  h += `</div><div class="card"><h3>C. Tenaga Kerja (Gotong Royong &amp; Dukungan)</h3><div class="hint" style="margin:-4px 0 4px">Komitmen sumber daya manusia untuk pelaksanaan renovasi rumah.</div>`;
+  TK.forEach(([k, t, d, other]) => {
+    const m = S.tk[k] || {};
+    h += `<div class="mrow" data-k="r_${k}"><div class="mh"><b>${t}</b><small>${d}</small></div>${tog('tk', k, m.a)}<div class="emsg"></div>
+      ${m.a === 'y' ? `${other ? `<div class="sub" data-k="nm_${k}"><input class="fld" placeholder="Nama sumber tenaga" value="${esc(m.nm || '')}" oninput="setSub('tk','${k}','nm',this.value)"><div class="emsg"></div></div>` : ''}
+      <div class="sub" data-k="k_${k}"><input class="fld" placeholder="Nama / keterangan relawan" value="${esc(m.k || '')}" oninput="setSub('tk','${k}','k',this.value)"><div class="emsg"></div></div>
+      <div class="sub" data-k="j_${k}"><div class="inl"><input class="fld" inputmode="numeric" placeholder="Jumlah" value="${esc(m.j || '')}" oninput="this.value=this.value.replace(/\\D/g,'');setSub('tk','${k}','j',this.value)"><span class="unit">orang</span></div><div class="emsg"></div></div>` : ''}</div>`;
+  });
+  return h + '</div>';
+}
+const totalKas = () => UANG.reduce((s, [k]) => s + ((S.uang[k] || {}).a === 'y' ? num(S.uang[k].v) : 0), 0);
+function updTot() { const t = totalKas(); if ($('totKas')) { $('totKas').textContent = rp(t); $('totChip').textContent = t >= MIN_SWADAYA ? '✓ Memenuhi syarat minimum' : 'Belum memenuhi syarat minimum'; } }
+
+function scores() {
+  let total = 0, answered = 0; const kel = KOMP.map(([nm, nos]) => {
+    let s = 0, mx = 0; const bad = [];
+    nos.forEach((no) => { const d = IND.find((x) => x.no === no); mx += 5; const a = S.ans[no]; if (a) { s += a; answered++; if (a >= 3) bad.push(d.t); } });
+    total += s; return { nm, s, mx, bad };
+  });
+  const avg = answered ? total / 13 : 0;
+  // ambang CONTOH — menunggu PO (P2)
+  const label = !answered ? '-' : avg < 2 ? 'Rusak Ringan' : avg < 3.5 ? 'Rusak Sedang' : 'Rusak Berat';
+  return { total, kel, label, bad: label === 'Rusak Berat' };
+}
+function pane5() {
+  const f = S.f, sc = scores();
+  const lines = (list, st) => list.filter(([k]) => (S[st][k] || {}).a === 'y').map(([, t]) => t);
+  const matL = lines(MAT_LAMA, 'mat'), matB = lines(MAT_BARU, 'mat');
+  const tkOn = TK.filter(([k]) => (S.tk[k] || {}).a === 'y'); const orang = tkOn.reduce((s, [k]) => s + num(S.tk[k].j), 0);
+  const kas = totalKas();
+  const r = (a, b, cls = '') => `<div class="r"><span>${a}</span><b class="${cls}">${b}</b></div>`;
+  let h = `<div style="font-size:11px;font-weight:800;color:var(--green-700);letter-spacing:.04em">LANGKAH 5 (FINAL)</div>
+  <h2 style="margin:2px 0 4px;font-size:18px">Kesimpulan, Rekomendasi Teknis &amp; Berita Acara</h2>
+  <div class="hint" style="margin-bottom:12px">Konsolidasi data verval, evaluasi kelayakan usulan, catatan lapangan, dan penandatanganan Berita Acara.</div>
+  <div class="card"><h3>Bagian A — Resume Legalitas CPB <span class="badge" style="float:right">Memenuhi</span></h3><div class="res">
+    ${r('Nama Penerima', esc(f.nama))}${r('NIK', MASK_NIK)}${r('Status Lahan', `${esc(f.lahan)}${f.lahanNo ? ` (${esc(f.lahanNo)})` : ''}`, 'ok')}
+    ${r('Kategori Hunian', esc(f.kategori))}${r('Rumah Satu-satunya', f.satu === 'y' ? 'Ya' : 'Tidak', f.satu === 'y' ? 'ok' : 'bad')}
+    ${r('Kelengkapan Dokumen', DOCS.map((d, i) => `${S.photos['d' + i] ? '✓' : '✕'} ${d[0]}`).join('<br>'))}</div></div>
+  <div class="card"><h3>Bagian B — Resume Fisik &amp; Kerusakan <span class="badge ${sc.bad ? 'red' : 'warn'}" style="float:right">${sc.label} · draft</span></h3>
+    <div class="score"><b>${sc.total}</b><span>dari 65 (skor 1/3/5 × 13 indikator)</span></div>
+    <div class="res">${sc.kel.map((k) => r(`${k.nm} (${k.s}/${k.mx})`, k.bad.length ? esc(k.bad.join(', ')) : 'Tidak ada masalah', k.bad.length ? 'bad' : 'ok')).join('')}</div>
+    <div class="hint" style="margin-top:8px">Kategori dan ambang skor hanya contoh; ambang resmi serta redaksi final menunggu PO (P1, P2).</div></div>
+  <div class="card"><h3>Bagian C — Resume Swadaya Warga</h3><div class="res">
+    ${r('Finansial Kas CPB', rp(kas), kas >= MIN_SWADAYA ? 'ok' : 'bad')}${r('Syarat Min. Swadaya (contoh)', kas >= MIN_SWADAYA ? 'Terpenuhi' : 'Belum terpenuhi', kas >= MIN_SWADAYA ? 'ok' : 'bad')}
+    ${r('Material Bekas Layak', matL.length ? `${matL.length} item (${esc(matL.join(', '))})` : 'Tidak ada')}${r('Material Baru Tersedia', matB.length ? `${matB.length} item (${esc(matB.join(', '))})` : 'Tidak ada')}
+    ${r('Dukungan Gotong Royong', tkOn.length ? `${orang} orang (${esc(tkOn.map(([k, t, , o]) => (o ? S.tk[k].nm : t)).join(', '))})` : 'Tidak ada')}
+    ${r('Estimasi nilai material', 'Menunggu aturan PO (P3)')}</div></div>
+  <div class="card"><h3>Bagian D — Catatan Penilaian Teknis Fasilitator Lapangan</h3>
+    ${fg('d1', 'Catatan Evaluasi Teknis &amp; Prioritas Rekomendasi', `<textarea class="fld" style="height:96px" maxlength="${MAXC}" oninput="setD('d1',this.value)">${esc(S.d1)}</textarea><div class="counter" id="c_d1">Tersisa ${MAXC - S.d1.length} karakter</div>`)}
+    ${fg('d2', 'Akses Pengiriman Material &amp; Kondisi Lingkungan', `<textarea class="fld" style="height:96px" maxlength="${MAXC}" oninput="setD('d2',this.value)">${esc(S.d2)}</textarea><div class="counter" id="c_d2">Tersisa ${MAXC - S.d2.length} karakter</div>`)}
+    <div class="callout green" style="margin:12px 0 0">Fasilitator Lapangan bertanggung jawab atas kebenaran faktual hasil survei dan validasi data teknis ini.</div></div>
+  <div class="card" data-k="rek"><h3>Bagian E — Kesimpulan Rekomendasi Lapangan ${RQ}</h3><div class="hint" style="margin:-4px 0 10px">Pertimbangan teknis kelayakan penetapan SK Penerima Bantuan Sosial.</div>`;
+  const rc = (key, cls, title, sub, body) => `<div class="rc ${cls} ${S.rek === key ? 'on' : ''}"><div class="hd" onclick="setRek('${key}')"><span class="dot"></span><div><b>${title}</b><small>${sub}</small></div></div>${S.rek === key ? `<div class="body2">${body}</div>` : ''}</div>`;
+  h += rc('lolos', '', 'Lolos Verval Lapangan', 'CPB memenuhi seluruh parameter kelaikan fisik bangunan, legalitas kepemilikan tanah, kriteria sosial ekonomi, dan kesiapan swadaya aktif.',
+    fg('skema', 'Pilih Skema Konstruksi yang Dianjurkan', ['Konvensional (Struktur Beton Bertulang)|Pondasi batu kali, kolom praktis 15×15 cm, dinding batako/bata diplester, rangka atap ringan/kayu lokal.', 'Ferosemen (Tembok Tanpa Struktur Kolom)|Perkuatan anyaman wiremesh berlapis spesi mortar semen pasir, hemat biaya &amp; fleksibel tanah labil.'].map((o) => { const [t, d] = o.split('|'); const v = t.split(' ')[0]; return `<div class="rop ${S.skema === v ? 'on' : ''}" onclick="setSk('${v}')"><input type="radio" ${S.skema === v ? 'checked' : ''}><div><b>${t}</b><div class="hint">${d}</div></div></div>`; }).join('')));
+  h += rc('dialih', '', 'Dialihkan ke Program Lainnya', 'Kebutuhan tidak sesuai Program Nominatif. Kondisi rumah atau usulan lebih tepat diakomodasi melalui skema program penanganan perumahan lain.',
+    fg('prog', 'Rekomendasi Alihan Program', PROG.map((p) => `<div class="rop ${S.prog === p ? 'on' : ''}" onclick="setPg(${PROG.indexOf(p)})"><input type="radio" ${S.prog === p ? 'checked' : ''}><div>${p}</div></div>`).join('')) +
+    fg('justif', 'Catatan Justifikasi Pengalihan', `<textarea class="fld" style="height:80px" maxlength="${MAXC}" placeholder="Tuliskan argumen atau dasar pengalihan program..." oninput="setJ(this.value)">${esc(S.justif)}</textarea>`));
+  h += rc('tolak', 'tolak', 'Ditolak / Tidak Direkomendasikan', 'Terdapat klausul ketidaksesuaian kriteria dasar Pergub Jabar atau CPB tidak memenuhi persyaratan kelayakan penerima bantuan.',
+    fg('alasan', 'Pilih Alasan Pembatalan / Gugur', ALASAN.map((a, i) => `<label class="chk"><input type="checkbox" ${S.alasan[i] ? 'checked' : ''} onchange="setAl(${i},this.checked)"><span>${a}</span></label>`).join('')));
+  h += `<div class="emsg" style="margin-top:0"></div></div>`;
+  h += `<div class="card"><h3>Bagian F — Pernyataan CPB &amp; Berita Acara</h3>`;
+  if (S.rek !== 'lolos') h += `<div class="callout">Hanya berlaku untuk rekomendasi <b>Lolos Verval Lapangan</b>. ${S.rek ? 'Tidak diperlukan untuk rekomendasi yang dipilih.' : 'Pilih rekomendasi pada Bagian E.'}</div>`;
+  else h += `<div class="pakta">“Calon Penerima Bantuan (CPB) sanggup mengikuti ketentuan program, melaksanakan pekerjaan renovasi secara gotong royong sesuai petunjuk teknis, memelihara hasil renovasi, dan tidak akan memindahtangankan atau mengundurkan diri.”<small>Peraturan Gubernur Jawa Barat No. 34 Tahun 2021</small></div>
+    <div class="sig wait"><h4>Diperiksa oleh: Koordinator Fasilitator Kab.</h4><div class="who">Dinas Perumahan dan Kawasan Permukiman</div><div class="box">Menunggu — dilengkapi di luar form ini</div></div>
+    <div class="sig" data-k="cpb"><h4>Diketahui oleh: Calon Penerima Bantuan (CPB) ${RQ}</h4><div class="who">${esc(f.nama)} · paraf / tanda tangan di layar</div><canvas id="sig_cpb"></canvas><button class="link red" onclick="sigClear('cpb')">Hapus</button><div class="emsg"></div></div>
+    <div class="sig" data-k="tpm"><h4>Dilakukan oleh: Tenaga Pendamping Masyarakat (TPM) ${RQ}</h4><div class="who">Fasilitator Lapangan Kecamatan</div><canvas id="sig_tpm"></canvas><button class="link red" onclick="sigClear('tpm')">Hapus</button><div class="emsg"></div></div>
+    <div class="callout" style="margin-bottom:8px">Berita Acara Verval No: akan diterbitkan sistem (menyusul)</div>
+    <div class="doc2"><button disabled>Cetak Form Blangko Fisik — menyusul</button><button disabled>Unduh PDF Berita Acara — menyusul</button></div>`;
+  return h + '</div>';
+}
+
+/* ===== handlers ===== */
+function setF(k, v) { S.f[k] = v; touch(); }
+function setR(k, v) { S.f[k] = v; rerender(); }
+function setAns(no, sc) { S.ans[no] = sc; rerender(); }
+function setNote(no, v) { S.note[no] = v; touch(); }
+function setAda(grp, k, a) { S[grp][k] = Object.assign({}, S[grp][k], { a }); rerender(); }
+function setSub(grp, k, f, v) { S[grp][k][f] = v; touch(); }
+function setD(k, v) { S[k] = v; const c = $('c_' + k); if (c) c.textContent = `Tersisa ${MAXC - v.length} karakter`; touch(); }
+function setRek(v) { S.rek = v; rerender(); }
+function setSk(v) { S.skema = v; rerender(); }
+function setPg(i) { S.prog = PROG[i]; rerender(); }
+function setJ(v) { S.justif = v; touch(); }
+function setAl(i, c) { S.alasan[i] = c; touch(); }
+function fmtRp(el) { el.value = el.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+/* foto */
+function pick(k) { pickKey = k; $('fileIn').click(); }
+$('fileIn').addEventListener('change', (e) => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f || pickKey === null) return;
+  const k = pickKey;
+  if (!/^image\/(jpeg|png)$/.test(f.type)) { S.perr[k] = 'Format harus .jpg/.jpeg/.png'; return rerender(); }
+  if (f.size > MAX_MB * 1048576) { S.perr[k] = `Ukuran file lebih dari ${MAX_MB} MB`; return rerender(); }
+  delete S.perr[k]; if (S.photos[k]) URL.revokeObjectURL(S.photos[k].url);
+  S.photos[k] = { url: URL.createObjectURL(f), name: f.name, size: (f.size / 1048576).toFixed(2) }; rerender();
+});
+function delPhoto(k) { if (S.photos[k].url.startsWith('blob:')) URL.revokeObjectURL(S.photos[k].url); delete S.photos[k]; rerender(); }
+
+/* tanda tangan — Pointer Events (touch + mouse), latar putih supaya terbaca saat dicetak */
+function sigDraw(id) {
+  const c = $('sig_' + id); if (!c) return;
+  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.round(r.width), h = Math.round(r.height);
+  if (!w) return;
+  if (c.width !== w * dpr || c.height !== h * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.strokeStyle = '#111'; x.lineWidth = 2.2; x.lineCap = 'round'; x.lineJoin = 'round';
+  SIG[id].forEach((s) => { x.beginPath(); s.forEach(([px, py], i) => (i ? x.lineTo(px * w, py * h) : x.moveTo(px * w, py * h))); if (s.length === 1) x.lineTo(s[0][0] * w + 0.1, s[0][1] * h); x.stroke(); });
+}
+function sigBind(id) {
+  const c = $('sig_' + id); if (!c) return; let cur = null;
+  const pt = (e) => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+  c.addEventListener('pointerdown', (e) => { e.preventDefault(); c.setPointerCapture(e.pointerId); cur = [pt(e)]; SIG[id].push(cur); sigDraw(id); });
+  c.addEventListener('pointermove', (e) => { if (!cur) return; cur.push(pt(e)); sigDraw(id); });
+  ['pointerup', 'pointercancel'].forEach((ev) => c.addEventListener(ev, () => { if (cur) { cur = null; touch(); } }));
+}
+function sigClear(id) { SIG[id] = []; sigDraw(id); touch(); }
+window.addEventListener('resize', () => ['cpb', 'tpm'].forEach(sigDraw));
+
+/* ===== render + flow ===== */
+function render() {
+  const f = S.f;
+  $('stepper').innerHTML = STEPS.map((s, i) => { const n = i + 1, cls = n === S.step ? 'active' : n < S.step ? 'done' : ''; return `<div class="step ${cls}"><i>${n < S.step ? '✓' : n}</i><span>${s}</span></div>${n < STEPS.length ? '<span class="sep">›</span>' : ''}`; }).join('');
+  const act = document.querySelector('.step.active'); if (act) $('stepper').scrollLeft = act.offsetLeft - 40;
+  $('pane').innerHTML = [pane1, pane2, pane3, pane4, pane5][S.step - 1]();
+  $('btnBack').style.display = S.step === 1 ? 'none' : '';
+  $('btnNext').textContent = S.step < 5 ? 'Lanjutkan' : S.rek === 'tolak' ? 'Simpan & Proses Penolakan' : S.rek === 'dialih' ? 'Simpan & Proses Pengalihan' : 'Selesaikan & Kirim Verval';
+  if (S.step === 4) updTot();
+  if (S.step === 5) ['cpb', 'tpm'].forEach((id) => { sigBind(id); sigDraw(id); });
+  if (S.show) paintErrors();
+}
+function rerender() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+function goStep(n) { S.step = n; S.show = false; render(); window.scrollTo(0, 0); }
+function next() {
+  // validasi wajib-isi sengaja tidak memblokir (sama seperti baseline 2026-10-14); validate() disimpan buat implementasi nyata
+  if (S.step < 5) goStep(S.step + 1);
+  else { if (!S.rek) S.rek = 'lolos'; const c = { lolos: ['Kirim Hasil Verval?', 'Setelah dikirim, usulan berstatus Lolos Verval Lapangan dan data tidak bisa diubah.'], dialih: ['Proses Pengalihan?', 'Usulan akan berstatus Dialihkan ke program yang dipilih. Data tidak bisa diubah.'], tolak: ['Proses Penolakan?', 'Usulan akan berstatus Ditolak dan diteruskan ke arsip penolakan. Data tidak bisa diubah.'] }[S.rek]; $('cfTitle').textContent = c[0]; $('cfMsg').textContent = c[1]; $('confirm').classList.add('show'); }
+}
+function prev() { if (S.step > 1) goStep(S.step - 1); }
+function closeConfirm() { $('confirm').classList.remove('show'); }
+let infoReset = false;
+function showInfo(title, msg, btn, sub = '', resetAfter = false) { $('inTitle').textContent = title; $('inMsg').textContent = msg; $('inSub').textContent = sub; $('inBtn').textContent = btn; infoReset = resetAfter; $('info').classList.add('show'); }
+function closeInfo() { $('info').classList.remove('show'); if (infoReset) resetAll(); }
+function submitForm() {
+  closeConfirm();
+  const ok = { lolos: 'Usulan berhasil dinyatakan lolos verifikasi lapangan.', dialih: 'Usulan berhasil dialihkan pada verifikasi lapangan.', tolak: 'Usulan berhasil ditolak pada verifikasi lapangan.' }[S.rek];
+  console.log('payload (mock):', JSON.stringify({ rek: S.rek, skor: scores().total, f: S.f, ans: S.ans, note: S.note, mat: S.mat, uang: S.uang, tk: S.tk, d1: S.d1, d2: S.d2, ...(S.rek === 'lolos' && { skema: S.skema }), ...(S.rek === 'dialih' && { prog: S.prog, justif: S.justif }), ...(S.rek === 'tolak' && { alasan: Object.keys(S.alasan).filter((i) => S.alasan[i]).map((i) => ALASAN[i]) }), ttd: { cpb: SIG.cpb.length, tpm: SIG.tpm.length } }));
+  showInfo('Berhasil', ok + ' (mock — belum terhubung API)', S.rek === 'lolos' ? 'Kembali ke Penugasan' : 'Kembali ke Detail Usulan', 'IMA-2026-001234', true);
+}
+function resetAll() { Object.values(S.photos).forEach((p) => p.url.startsWith('blob:') && URL.revokeObjectURL(p.url)); S = blank(); SIG.cpb = []; SIG.tpm = []; render(); window.scrollTo(0, 0); }
+
+/* isi contoh — hanya untuk demo / uji validasi */
+function fillDemo() {
+  const ph = (t, c) => { const cv = document.createElement('canvas'); cv.width = cv.height = 160; const x = cv.getContext('2d'); x.fillStyle = c; x.fillRect(0, 0, 160, 160); x.fillStyle = '#fff'; x.font = '14px sans-serif'; x.fillText(t, 10, 84); return { url: cv.toDataURL('image/jpeg', .6), name: t + '.jpg', size: '0.01' }; };
+  Object.assign(S.f, { kategori: KATEGORI[0], lama: '12', satu: 'y', lahan: LAHAN[0], lahanNo: 'AJB No. 42/2011' });
+  DOCS.forEach((d, i) => (S.photos['d' + i] = ph('dokumen ' + (i + 1), '#6B7280'))); PHOTOS.forEach((p, i) => (S.photos['p' + i] = ph(p[0], '#8B6B4A')));
+  IND.forEach((d) => { const sc = [1, 3, 5][d.no % 3]; S.ans[d.no] = d.o.some(([, s]) => s === sc) ? sc : 5; if (S.ans[d.no] > 1) S.note[d.no] = 'Contoh keterangan kondisi lapangan.'; });
+  [...MAT_LAMA, ...MAT_BARU].forEach(([k], i) => { if (i % 3 === 2) S.mat[k] = { a: 'n' }; else { S.mat[k] = { a: 'y', q: String(5 + i) }; S.photos['f_' + k] = ph('material', '#7A8B4A'); } });
+  S.uang = { u0: { a: 'y', v: '2.500.000' }, u1: { a: 'n' }, u2: { a: 'y', v: '1.500.000' }, u3: { a: 'n' } };
+  S.tk = { t0: { a: 'y', k: 'CPB dan 1 mandor tukang lokal', j: '2' }, t1: { a: 'y', k: 'Saudara kandung', j: '2' }, t2: { a: 'y', k: 'Kelompok ronda RT 04', j: '5' }, t3: { a: 'n' } };
+  S.d1 = 'Prioritas penanganan pada pondasi dan rangka atap yang rawan runtuh.'; S.d2 = 'Akses jalan semen selebar 1,8 meter, material dibawa dengan pikap kecil.';
+  S.rek = 'lolos'; S.skema = 'Konvensional';
+  const line = [[0.1, 0.65], [0.25, 0.3], [0.4, 0.7], [0.55, 0.35], [0.8, 0.6]]; SIG.cpb = [line]; SIG.tpm = [line.map(([x, y]) => [x, 1 - y])];
+  rerender();
+}
+render();
+</script>
+</body>
+</html>
