@@ -19,6 +19,7 @@
   .ctl { width: 100%; max-width: 360px; background: #fff; border-radius: 12px; padding: 14px; font-size: 13px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; z-index: 60; }
   @media (max-width: 820px) { .ctl { position: relative; max-height: none; max-width: 430px; } }
   .ctl h2 { margin: 0 0 6px; font-size: 15px; } .ctl h4 { margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .fold { margin-top: 14px; } .fold summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); list-style: none; padding: 6px 0; } .fold summary::-webkit-details-marker { display: none; } .fold summary::before { content: '▸ '; } .fold[open] summary::before { content: '▾ '; }
   .banner { background: #333; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; }
   .oq { margin: 8px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.5; } .oq li { margin-bottom: 4px; }
   .seg { display: flex; gap: 6px; margin-bottom: 6px; } .seg button { flex: 1; min-height: 34px; border: 1.5px solid var(--border); background: #fff; border-radius: 8px; font: 700 12px Lato, sans-serif; cursor: pointer; }
@@ -79,14 +80,6 @@
 <div class="wrap">
   <aside class="ctl">
     <div class="banner">Prototype — dummy, belum disetujui PO</div>
-    <h4>Catatan reviewer: Open Question (T6)</h4>
-    <ol class="oq">
-      <li><b>Scope penandatangan:</b> section hanya untuk CPB, atau semua slot penandatangan? (toggle "Cakupan")</li>
-      <li><b>Centang wajib atau teks saja:</b> prototype ini mengasumsikan centang wajib; versi "teks saja" = buang checkbox, gembok scroll tidak ada.</li>
-      <li><b>Ganti vs berdampingan dengan pledge:</b> prototype mengikuti gap audit, Format E <b>menggantikan</b> pledge Pergub 34/2021 (tidak ada dua pakta).</li>
-      <li><b>Satu atau dua konfirmasi:</b> toggle "Tampilan teks" — satu kotak (1 centang) vs tab terpisah Surat Pernyataan / Pakta Integritas. Mode tab = 2 centang yang selalu tampil berdua di bawah, tidak mengikuti tab aktif; tiap centang baru aktif setelah teks dokumennya di-scroll habis.</li>
-    </ol>
-
     <h4>Varian</h4>
     <div class="seg" id="tgVar"><button data-v="A">A: di dalam popup TTD</button><button data-v="B">B: di Bagian F</button></div>
     <h4>Cakupan section</h4>
@@ -103,8 +96,18 @@
       <button data-j="reset" style="grid-column: span 2; border-color:#999; color:#555">Reset semua</button>
     </div>
 
-    <h4>Asumsi prototype</h4>
+    <details class="fold"><summary>Asumsi prototype</summary>
     <div class="asm" id="asm"></div>
+    </details>
+
+    <details class="fold"><summary>Catatan reviewer: Open Question (T6)</summary>
+    <ol class="oq">
+      <li><b>Scope penandatangan:</b> section hanya untuk CPB, atau semua slot penandatangan? (toggle "Cakupan")</li>
+      <li><b>Centang wajib atau teks saja:</b> prototype ini mengasumsikan centang wajib; versi "teks saja" = buang checkbox, gembok scroll tidak ada.</li>
+      <li><b>Ganti vs berdampingan dengan pledge:</b> prototype mengikuti gap audit, Format E <b>menggantikan</b> pledge Pergub 34/2021 (tidak ada dua pakta).</li>
+      <li><b>Satu atau dua konfirmasi:</b> toggle "Tampilan teks" — satu kotak (1 centang) vs tab terpisah Surat Pernyataan / Pakta Integritas. Mode tab = 2 centang yang selalu tampil berdua di bawah, tidak mengikuti tab aktif; tiap centang baru aktif setelah teks dokumennya di-scroll habis.</li>
+    </ol>
+    </details>
   </aside>
 
   <main class="phone">
@@ -224,8 +227,7 @@ function render() {
   <div class="rec"><b>Rekomendasi: Lolos Verval Lapangan</b><div class="hint">Bagian A–E diringkas (dummy). Prototype fokus pada Bagian F.</div></div>
   <div class="card"><h3>Bagian F — Pernyataan CPB &amp; Berita Acara</h3>`;
   if (S.variant === 'B') {
-    h += `<div id="brb"></div>
-    <div class="hint" style="margin:6px 0 12px">Berlaku untuk: ${S.scope === 'cpb' ? 'tombol tanda tangan CPB saja' : 'semua penandatangan'}. Popup tanda tangan = kanvas saja.</div>`;
+    h += `<div id="brb" style="margin-bottom:12px"></div>`;
   }
   h += `<div class="sig" style="border:1px dashed #D1D5DB;border-radius:8px;padding:12px"><h4>Diperiksa oleh: Koordinator Fasilitator Kab.</h4><div class="who" style="margin-bottom:0">Dinas Perumahan dan Kawasan Permukiman</div><div style="margin-top:8px;font-size:12px;font-weight:700;color:#B45309">Menunggu</div></div>`;
   slots.forEach((s) => {
