@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — TTD Surat Pernyataan &amp; Pakta Integritas (Verval Lapangan, CMS Mobile)</title>
+<meta name="proto:desc" content="Prototype section Surat Pernyataan dan Pakta Integritas di popup tanda tangan Verval Lapangan (varian popup/Bagian F, 1 kotak atau tab)">
+<meta name="proto:date" content="2026-11-11">
+<meta name="proto:tags" content="imah-aing,verval-lapangan,cms,tanda-tangan">
+<style>
+  :root {
+    --green-600: #16A75C; --green-700: #069550; --green-800: #008444; --green-50: #E8F6EE;
+    --bg: #EDEFF3; --card: #fff; --border: #E0E3E8; --text: #1F2937; --muted: #6B7280;
+    --red: #F44336; --red-50: #FFEBEE; --amber-50: #FFF8E1; --amber: #B26A00; --amber-500: #F5A623;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d9dce2; font-family: Lato, Roboto, system-ui, sans-serif; color: var(--text); }
+  .wrap { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; padding: 16px; }
+  .ctl { width: 100%; max-width: 360px; background: #fff; border-radius: 12px; padding: 14px; font-size: 13px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; z-index: 60; }
+  @media (max-width: 820px) { .ctl { position: relative; max-height: none; max-width: 430px; } }
+  .ctl h2 { margin: 0 0 6px; font-size: 15px; } .ctl h4 { margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .banner { background: #333; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; }
+  .oq { margin: 8px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.5; } .oq li { margin-bottom: 4px; }
+  .seg { display: flex; gap: 6px; margin-bottom: 6px; } .seg button { flex: 1; min-height: 34px; border: 1.5px solid var(--border); background: #fff; border-radius: 8px; font: 700 12px Lato, sans-serif; cursor: pointer; }
+  .seg button.on { border-color: var(--green-600); background: var(--green-50); color: var(--green-700); }
+  .jump { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .jump button { min-height: 34px; border: 1.5px solid var(--green-700); background: #fff; color: var(--green-700); border-radius: 8px; font: 700 12px Lato, sans-serif; cursor: pointer; }
+  .asm { font-size: 11px; color: var(--amber); background: var(--amber-50); border: 1px solid #F5D58A; border-radius: 8px; padding: 6px 8px; margin-top: 6px; line-height: 1.45; }
+
+  .phone { width: 100%; max-width: 430px; min-height: 760px; background: var(--bg); border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,.2); position: relative; }
+  .topbar { background: var(--green-600); color: #fff; padding: 12px; } .topbar b { display: block; font-size: 15px; } .topbar span { font-size: 12px; opacity: .9; }
+  .body { padding: 12px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 8px; font-size: 14px; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .callout { background: #F9FBFC; border: 1px solid #EFF1F3; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #374151; margin-bottom: 12px; line-height: 1.45; }
+  .callout.green { background: var(--green-50); border-color: #BFE5CF; color: var(--green-700); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--green-50); color: var(--green-700); }
+  .rec { border: 1.5px solid var(--green-600); background: #FBFEFC; border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
+  .btn { width: 100%; min-height: 46px; border-radius: 10px; border: 1.5px solid var(--green-700); background: var(--green-700); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn.sec { background: #fff; color: var(--green-700); }
+  .btn:disabled { background: #E0E0E0; border-color: #E0E0E0; color: #8a8a8a; cursor: not-allowed; }
+  .sig { margin-bottom: 14px; } .sig h4 { margin: 0 0 2px; font-size: 13px; } .sig .who { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .sig .box { height: 70px; border: 1.5px dashed #C5CAD3; border-radius: 10px; display: grid; place-items: center; color: var(--muted); font-size: 12px; background: #F9FAFB; }
+  .sig .pv { border: 1.5px solid var(--green-600); border-radius: 10px; background: #fff; padding: 6px; } .sig .pv img { display: block; width: 100%; height: 90px; object-fit: contain; }
+  .sig .row { display: flex; gap: 14px; margin-top: 6px; } .link { background: none; border: 0; padding: 0; font: 700 12px Lato, sans-serif; color: var(--green-700); cursor: pointer; } .link.red { color: #C62828; }
+  .doc2 { display: grid; gap: 8px; } .doc2 button { min-height: 40px; border-radius: 10px; border: 1.5px solid var(--border); background: #F3F4F6; color: #8a8a8a; font-weight: 700; font-size: 12px; }
+
+  /* kotak scroll — pola S&K web StepOne.vue (h-48), palet CMS */
+  .sbox { border: 1px solid #D1D5DB; border-radius: 8px; padding: 14px; height: 192px; overflow-y: auto; font-size: 13px; background: #F9FAFB; line-height: 1.5; }
+  .sbox h5 { margin: 0 0 6px; font-size: 12px; text-align: center; text-transform: uppercase; } .sbox h5 + h6 { display: none; }
+  .sbox .sec { margin-bottom: 14px; } .sbox .sec > b.t { display: block; font-size: 11px; color: var(--green-700); letter-spacing: .04em; margin-bottom: 4px; }
+  .sbox ol, .sbox ul { margin: 4px 0 6px; padding-left: 20px; } .sbox ol.a { list-style: lower-alpha; } .sbox li { margin-bottom: 4px; }
+  .sbox .bl { background: var(--amber-50); color: var(--amber); border-radius: 3px; padding: 0 3px; }
+  .scrollhint { font-size: 12px; color: var(--amber-500); margin: 6px 0 0; font-weight: 700; } .scrollhint.done { color: var(--green-700); }
+  .chk { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 13px; cursor: pointer; }
+  .chk.off { cursor: not-allowed; opacity: .5; } .chk input { width: 18px; height: 18px; margin-top: 1px; flex: none; accent-color: var(--green-700); }
+  .tabs { display: flex; border-bottom: 1.5px solid var(--border); margin-bottom: 8px; }
+  .tab { flex: 1; min-height: 38px; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1.5px; font: 700 12px Lato, sans-serif; color: var(--muted); cursor: pointer; }
+  .tab.on { color: var(--green-700); border-bottom-color: var(--green-700); } .tab .ok { color: var(--green-700); }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .overlay.show { display: flex; }
+  @media (min-width: 821px) { .overlay { padding-left: 392px; } } /* jangan menutup panel kontrol */
+  .dlg { background: #fff; border-radius: 8px; width: calc(100vw - 32px); max-width: 430px; max-height: 94vh; display: flex; flex-direction: column; overflow: hidden; }
+  .dlg .hd { padding: 8px 24px; } .dlg .hd h1 { margin: 12px 0 0; font: 700 21px Roboto, Lato, sans-serif; color: var(--green-800); } .dlg .hd p { margin: 4px 0 0; font-size: 14px; color: #374151; }
+  .dlg .bd { padding: 8px 24px 16px; overflow-y: auto; }
+  .dlg canvas { display: block; width: 100%; height: 180px; border: 1.5px dashed #9AA1AD; border-radius: 10px; background: #fff; touch-action: none; cursor: crosshair; margin-top: 12px; }
+  .dlg .er { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; } .dlg .er p { margin: 0; color: #DC2626; min-height: 16px; }
+  .dlg .er button { background: none; border: 0; color: var(--green-700); font: 700 12px Lato, sans-serif; cursor: pointer; } .dlg .er button:disabled { color: #9CA3AF; }
+  .dlg .ft { background: #FAFAFA; padding: 16px 24px; display: flex; justify-content: flex-end; gap: 16px; }
+  .dlg .ft button { min-height: 38px; padding: 9px 16px; border-radius: 8px; font: 700 14px Lato, Roboto, sans-serif; cursor: pointer; border: 1.5px solid var(--green-700); background: var(--green-700); color: #fff; }
+  .dlg .ft button.sec { background: #fff; color: var(--green-800); border-color: var(--green-800); }
+  .dlg .ft button:disabled { background: #E0E0E0; border-color: #E0E0E0; color: #8a8a8a; cursor: not-allowed; }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -1px; margin-right: 6px; } @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="ctl">
+    <div class="banner">Prototype — dummy, belum disetujui PO</div>
+    <h4>Catatan reviewer: Open Question (T6)</h4>
+    <ol class="oq">
+      <li><b>Scope penandatangan:</b> section hanya untuk CPB, atau semua slot penandatangan? (toggle "Cakupan")</li>
+      <li><b>Centang wajib atau teks saja:</b> prototype ini mengasumsikan centang wajib; versi "teks saja" = buang checkbox, gembok scroll tidak ada.</li>
+      <li><b>Ganti vs berdampingan dengan pledge:</b> prototype mengikuti gap audit, Format E <b>menggantikan</b> pledge Pergub 34/2021 (tidak ada dua pakta).</li>
+      <li><b>Satu atau dua konfirmasi:</b> toggle "Tampilan teks" — satu kotak (1 centang) vs tab terpisah Surat Pernyataan / Pakta Integritas. Mode tab = 2 centang yang selalu tampil berdua di bawah, tidak mengikuti tab aktif; tiap centang baru aktif setelah teks dokumennya di-scroll habis.</li>
+    </ol>
+
+    <h4>Varian</h4>
+    <div class="seg" id="tgVar"><button data-v="A">A: di dalam popup TTD</button><button data-v="B">B: di Bagian F</button></div>
+    <h4>Slot penandatangan</h4>
+    <div class="seg" id="tgSlot"><button data-v="2">2 slot (CPB + TPM)</button><button data-v="3">3 kolom Format E</button></div>
+    <h4>Cakupan section</h4>
+    <div class="seg" id="tgScope"><button data-v="cpb">CPB saja</button><button data-v="all">Semua slot</button></div>
+    <h4>Tampilan teks</h4>
+    <div class="seg" id="tgTab"><button data-v="1">Satu kotak (1 centang)</button><button data-v="2">Tab terpisah (2 centang)</button></div>
+
+    <h4>Lompat ke state (slot CPB)</h4>
+    <div class="jump">
+      <button data-j="unread">Belum scroll</button><button data-j="read">Sudah scroll</button>
+      <button data-j="nocheck">Belum centang</button><button data-j="empty">Kanvas kosong</button>
+      <button data-j="uploading">Uploading</button><button data-j="saved">Tersimpan</button>
+      <button data-j="half" style="grid-column: span 2">Baru 1 dari 2 dicentang (mode tab)</button>
+      <button data-j="reset" style="grid-column: span 2; border-color:#999; color:#555">Reset semua</button>
+    </div>
+
+    <h4>Asumsi prototype</h4>
+    <div class="asm" id="asm"></div>
+  </aside>
+
+  <main class="phone">
+    <div class="topbar"><b>Verval Lapangan — Langkah 5</b><span>Siti Aminah · Kesimpulan &amp; Berita Acara</span></div>
+    <div class="body" id="page"></div>
+  </main>
+</div>
+
+<div class="overlay" id="ov"><div class="dlg" id="dlg"></div></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+// Data dummy. Isian dari field form existing: name, nik, phone, address, village, district, city, landStatus, yearsOccupied, income.
+const F = { name: 'Siti Aminah', nik: '3273010101700001', phone: '0812-0000-0000', address: 'Kp. Contoh RT 02/RW 05', village: 'Sukamaju', district: 'Cibeunying', city: 'Kota Bandung', land: 'Milik Sendiri', years: '12', income: '1.200.000' };
+const BL = '<span class="bl" title="Tidak ada padanan field di form Verval Lapangan">…</span>';
+
+const SLOTS = {
+  2: [
+    { id: 'cpb', title: 'Diketahui oleh: Calon Penerima Bantuan (CPB)', who: F.name },
+    { id: 'tpm', title: 'Dilakukan oleh: Tenaga Pendamping Masyarakat (TPM)', who: 'Rahmat Hidayat' },
+  ],
+  3: [
+    { id: 'petugas', title: 'Petugas Yang Mencatat/Menerima di Kantor Desa/Kelurahan', who: 'Dedi Kurniawan' },
+    { id: 'saksi', title: 'Disaksikan oleh: Pemilik Rumah/Tanah/Ketua RT/TPM', who: 'Asep Sutisna (Ketua RT)' },
+    { id: 'cpb', title: 'Dinyatakan oleh: Calon Penerima Bantuan', who: F.name },
+  ],
+};
+
+// R = status baca/centang per kunci teks: all (1 kotak), sp (tab Surat Pernyataan), pi (tab Pakta Integritas); tab = tab aktif
+function newR() { const d = () => ({ read: false, agreed: false }); return { all: d(), sp: d(), pi: d(), tab: 'sp' }; }
+const S = { variant: 'A', n: 2, scope: 'cpb', tabs: false, sig: {}, bR: newR() };
+let D = null; // state popup: { id, gated, R, strokes, err, uploading }
+let timer = null;
+
+const keysNow = () => (S.tabs ? ['sp', 'pi'] : ['all']);
+const isOk = (R) => keysNow().every((k) => R[k].read && R[k].agreed);
+const sigOf = (id) => S.sig[id] || (S.sig[id] = { img: null, R: newR() });
+const gated = (id) => S.scope === 'all' || id === 'cpb';
+const slotName = (id) => SLOTS[S.n].find((s) => s.id === id);
+
+/* ---- teks Format D + E (copy dari docs/cms/reports/2026-11-10-surat-pernyataan-pakta-integritas-copy.md; catatan kaki "*) coret yang tidak perlu" dibuang atas arahan user) ---- */
+function docHTML(k) {
+  const sp = `<div class="sec"><b class="t">SURAT PERNYATAAN</b>
+  <h5>Surat Pernyataan/Keterangan Calon Penerima Bantuan Bedah Rumah</h5>
+  <p>Saya yang bertanda tangan :</p>
+  <ul style="list-style:none;padding-left:0">
+    <li>nama : ${F.name}</li><li>Nomor Induk Kependudukan (NIK) : ${F.nik}</li><li>tempat, tanggal lahir : ${BL}</li>
+    <li>pekerjaan : ${BL}</li><li>nomor telepon : ${F.phone}</li><li>alamat : ${F.address}</li></ul>
+  <p>menyatakan bahwa saya warga negara Indonesia:</p>
+  <ol class="a">
+    <li>menempati rumah tidak layak huni dan/atau tanah satu-satunya yang terletak di:
+      <ul><li>jalan, RT/RW : ${F.address}</li><li>kelurahan, kecamatan : ${F.village}, ${F.district}</li><li>kota : ${F.city}</li></ul>
+      dengan <ul><li>luas tanah : ${BL}</li><li>status tanah : ${F.land}, tidak dalam sengketa</li>
+      <li>telah ditempati selama : ${F.years} tahun (minimal 1 (satu) tahun terakhir) yang saya tempati/peroleh dari ${BL} sejak tahun ${BL};</li></ul></li>
+    <li>memiliki penghasilan sendiri jika lajang atau penghasilan bersama suami-istri jika berpasangan, rata-rata sebesar Rp ${F.income} per bulan dan penghasilan ini masih di bawah upah minimum provinsi atau upah minimum kabupaten/kota;</li>
+    <li>belum pernah menerima Bantuan Stimulan Perumahan Swadaya (BSPS), Bedah Rumah, atau program kemudahan dan bantuan pembiayaan perumahan dari pemerintah dalam 5 (lima) tahun terakhir, kecuali karena bencana, kebakaran, dan/atau penataan kumuh;</li>
+    <li>bersedia menerima dan akan menggunakan dana Bedah Rumah sesuai hukum;</li>
+    <li>akan menghuni rumah yang telah direnovasi melalui Bedah Rumah selama minimal 3 (tiga) tahun kecuali karena alasan yang sah;</li>
+    <li>tidak akan mengundurkan diri setelah dinyatakan sebagai penerima bantuan Bedah Rumah;</li>
+    <li>bersedia diperiksa oleh petugas/pejabat yang berwenang hanya terkait Bedah Rumah; dan</li>
+    <li>bersedia dikenai sanksi jika memberikan data dan informasi yang tidak sesuai dengan fakta/hukum.</li></ol>
+  <p>Pernyataan ini dan lampirannya saya buat dengan sebenarnya dengan penuh tanggung jawab dan tanpa paksaan.</p>
+  </div>`;
+  const pi = `<div class="sec"><b class="t">PAKTA INTEGRITAS</b>
+  <h5>Pakta Integritas Calon Penerima Bantuan/Penerima Bantuan Bedah Rumah</h5>
+  <p>Saya, ${F.name} (nama tanpa gelar), ${F.nik} (nomor induk kependudukan), sebagai calon penerima bantuan Bedah Rumah atau penerima bantuan Bedah Rumah menyatakan hal berikut ini.</p>
+  <ol>
+    <li>Data dan informasi yang saya tuliskan atau sampaikan merupakan data dan informasi yang benar dan dapat dipertanggungjawabkan.</li>
+    <li>Siap dan bersedia bertanggung jawab penuh atas penggunaan dana bantuan untuk peningkatan kualitas/renovasi/perbaikan rumah tidak layak huni dan pendokumentasian bukti pertanggungjawaban atas penggunaan dana bantuan.</li>
+    <li>Saling bergotong-royong, bekerja sama, dan saling mengawasi pelaksanaan Bedah Rumah.</li>
+    <li>Fokus dalam melaksanakan peningkatan kualitas/renovasi/perbaikan rumah tidak layak huni sesuai ketentuan teknis dan menyelesaikan pekerjaan sesuai rencana.</li>
+    <li>Cepat melaporkan suatu hal yang terjadi dalam pelaksanaan yang tidak sesuai rencana atau terjadi suatu masalah dan bersedia dievaluasi oleh pihak yang berwenang.</li>
+    <li>Tidak mengalihkan, tidak memindahtangankan, tidak menjual, tidak menghibahkan, atau tidak menjaminkan bantuan kepada pihak lain.</li>
+    <li>Siap dan bersedia mengembalikan bantuan dan/atau bersedia menerima sanksi sesuai hukum jika terbukti memberikan data yang tidak benar, menyalahgunakan bantuan, atau tidak melaksanakan kewajiban sesuai hukum.</li>
+    <li>Tidak akan menjual atau tidak akan meninggalkan rumah saya yang telah menerima bantuan Bedah Rumah selama minimal 3 (tiga) tahun terhitung setelah pekerjaan fisik rumah telah selesai 100%, kecuali karena alasan yang sah.</li>
+    <li>Tidak akan menyewakan rumah saya yang telah menerima bantuan Bedah Rumah selama minimal 3 (tiga) tahun terhitung setelah pekerjaan fisik rumah telah selesai 100%, kecuali karena alasan yang sah.</li>
+    <li>Siap dan bersedia menjaga, memelihara, dan memanfaatkan rumah hasil Bedah Rumah sebagai tempat tinggal yang/menuju layak huni bagi keluarga penerima bantuan.</li></ol>
+  <p>Pakta Integritas ini saya buat dengan penuh kesadaran dan tanpa paksaan dari pihak mana pun. Jika pernyataan ini terbukti tidak benar atau saya tidak melaksanakan kewajiban sebagaimana mestinya, saya bersedia dikenai/menerima sanksi sesuai dengan ketentuan peraturan perundang-undangan.</p></div>`;
+  return k === 'sp' ? sp : k === 'pi' ? pi : sp + pi;
+}
+
+/* ---- blok baca: kotak scroll + hint + checkbox (dipakai A di popup dan B di Bagian F) ---- */
+// Mode tab: 2 tab (Surat Pernyataan | Pakta Integritas), tiap tab punya kotak scroll + checkbox sendiri = 2 konfirmasi.
+const LBL = {
+  all: 'Saya telah membaca dan menyatakan Surat Pernyataan dan Pakta Integritas di atas.',
+  sp: 'Saya telah membaca dan menyatakan Surat Pernyataan di atas.',
+  pi: 'Saya telah membaca dan menyatakan Pakta Integritas di atas.',
+};
+const TABN = { sp: 'Surat Pernyataan', pi: 'Pakta Integritas' };
+const atEnd = (el) => el.scrollTop + el.clientHeight >= el.scrollHeight - 4; // pola StepOne.vue: sekali true tidak balik
+// Isi container `#${pfx}rb`; onChange dipanggil saat status baca/centang berubah.
+function mountRead(pfx, R, onChange) {
+  const ks = keysNow(); if (!ks.includes(R.tab)) R.tab = ks[0];
+  const k = R.tab, st = R[k];
+  const tabs = S.tabs ? `<div class="tabs" role="tablist">${ks.map((t) => `<button type="button" role="tab" class="tab ${t === k ? 'on' : ''}" data-tab="${t}" aria-selected="${t === k}">${TABN[t]} <span class="ok" ${R[t].agreed ? '' : 'hidden'}>✓</span></button>`).join('')}</div>` : '';
+  $(pfx + 'rb').innerHTML = `${tabs}<div class="sbox" id="${pfx}box" tabindex="0">${docHTML(k)}</div>
+  <p class="scrollhint ${st.read ? 'done' : ''}" id="${pfx}hint">${st.read ? 'Seluruh ketentuan sudah dibaca.' : 'Gulir ke bawah untuk membaca seluruh ketentuan'}</p>
+  ${(S.tabs ? ks : [k]).map((t) => `<label class="chk ${R[t].read ? '' : 'off'}" id="${pfx}lbl_${t}"><input type="checkbox" id="${pfx}chk_${t}" ${R[t].read ? '' : 'disabled'} ${R[t].agreed ? 'checked' : ''}><span>${LBL[t]}</span></label>`).join('')}
+  ${S.tabs ? `<div class="hint" id="${pfx}prog"></div>` : ''}`;
+  const box = $(pfx + 'box');
+  const meta = () => {
+    if (!S.tabs) return;
+    $(pfx + 'rb').querySelectorAll('.tab').forEach((b) => { b.querySelector('.ok').hidden = !R[b.dataset.tab].agreed; });
+    $(pfx + 'prog').textContent = `${ks.filter((t) => R[t].agreed).length} dari 2 konfirmasi dicentang`;
+  };
+  $(pfx + 'rb').querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { R.tab = b.dataset.tab; mountRead(pfx, R, onChange); }));
+  box.addEventListener('scroll', () => {
+    if (st.read || !atEnd(box)) return;
+    st.read = true; $(pfx + 'hint').textContent = 'Seluruh ketentuan sudah dibaca.'; $(pfx + 'hint').classList.add('done'); $(pfx + 'chk_' + k).disabled = false; $(pfx + 'lbl_' + k).classList.remove('off'); onChange();
+  });
+  (S.tabs ? ks : [k]).forEach((t) => $(pfx + 'chk_' + t).addEventListener('change', (e) => { R[t].agreed = e.target.checked; meta(); onChange(); }));
+  meta();
+  if (st.read) box.scrollTop = box.scrollHeight;
+}
+
+/* ---- halaman: Langkah 5, Bagian F ---- */
+function render() {
+  const keepScroll = $('bbox') && !S.noKeep ? $('bbox').scrollTop : 0; S.noKeep = false;
+  const slots = SLOTS[S.n];
+  const anySaved = slots.some((s) => sigOf(s.id).img);
+  const bOk = isOk(S.bR);
+  let h = `<div style="font-size:11px;font-weight:800;color:var(--green-700);letter-spacing:.04em">LANGKAH 5 (FINAL)</div>
+  <h2 style="margin:2px 0 10px;font-size:18px">Kesimpulan, Rekomendasi Teknis &amp; Berita Acara</h2>
+  <div class="rec"><b>Rekomendasi: Lolos Verval Lapangan</b><div class="hint">Bagian A–E diringkas (dummy). Prototype fokus pada Bagian F.</div></div>
+  <div class="card"><h3>Bagian F — Pernyataan CPB &amp; Berita Acara</h3>`;
+  if (S.variant === 'B') {
+    h += `<div class="callout green" style="margin-bottom:8px">Menggantikan kartu pledge Pergub 34/2021 (satu kalimat). Tidak ada dua pakta.</div><div id="brb"></div>
+    <div class="hint" style="margin:6px 0 12px">Berlaku untuk: ${S.scope === 'cpb' ? 'tombol tanda tangan CPB saja' : 'semua penandatangan'}. Popup tanda tangan = kanvas saja.</div>`;
+  } else {
+    h += `<div class="callout green">Surat Pernyataan &amp; Pakta Integritas (Format D/E, menggantikan pledge Pergub 34/2021) dibaca dan disetujui <b>di dalam popup tanda tangan</b> ${S.scope === 'cpb' ? '(slot CPB saja)' : '(semua slot)'}.</div>`;
+  }
+  h += `<div class="sig"><h4>Diperiksa oleh: Koordinator Fasilitator Kab.</h4><div class="who">Dinas Perumahan dan Kawasan Permukiman</div><div class="box">Menunggu — dilengkapi di luar form ini</div></div>`;
+  slots.forEach((s) => {
+    const g = sigOf(s.id), lock = S.variant === 'B' && gated(s.id) && !bOk;
+    h += `<div class="sig"><h4>${s.title} <span style="color:var(--red)">*</span></h4><div class="who">${s.who}</div>`;
+    if (g.img) h += `<div class="pv"><img alt="Tanda tangan ${s.who}" src="${g.img}"></div><div class="row"><button class="link" data-act="open" data-id="${s.id}">Ubah</button><button class="link red" data-act="del" data-id="${s.id}">Hapus</button></div>`;
+    else h += `<button class="btn sec" data-act="open" data-id="${s.id}" ${lock ? 'disabled' : ''}>Tanda Tangani</button>${lock ? `<div class="hint">${S.tabs ? 'Baca dan centang kedua konfirmasi (Surat Pernyataan &amp; Pakta Integritas) di atas dulu.' : 'Baca seluruh teks dan centang persetujuan di atas dulu.'}</div>` : ''}`;
+    h += `</div>`;
+  });
+  h += `<div class="callout" style="margin-bottom:8px">Berita Acara Verval Lapangan No: akan diterbitkan sistem (menyusul)</div>
+  <div class="doc2"><button disabled>Cetak Form Blangko Fisik — menyusul</button><button disabled>Unduh PDF Berita Acara — menyusul</button></div></div>`;
+  $('page').innerHTML = h;
+  if (S.variant === 'B') {
+    mountRead('b', S.bR, render);
+    if (!S.bR[S.bR.tab].read) $('bbox').scrollTop = keepScroll;
+  }
+  $('page').querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => act(b.dataset.act, b.dataset.id)));
+  $('asm').innerHTML = `Hapus = <b>centang dan status baca direset</b> (asumsi). Ubah = kanvas dikosongkan, centang/baca slot itu <b>dipertahankan</b> (asumsi). ${S.variant === 'B' ? 'Varian B: centang satu untuk semua slot; Hapus mereset centang hanya bila tidak ada slot lain yang tersimpan (asumsi).' : 'Varian A: centang per slot; tutup popup tanpa simpan = reset.'} Simpan disabled sampai scroll habis + dicentang (mode tab: kedua tab, masing-masing 1 centang); kanvas kosong baru memunculkan error saat Simpan diklik (asumsi, supaya error "Tanda tangan wajib diisi" bisa muncul). Label checkbox dan hint = karangan UI, bukan teks hukum. Placeholder kuning "…" = blank Format D/E tanpa padanan field di form.`;
+  document.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => {
+    const key = sg.id === 'tgVar' ? S.variant : sg.id === 'tgSlot' ? String(S.n) : sg.id === 'tgTab' ? (S.tabs ? '2' : '1') : S.scope;
+    b.classList.toggle('on', b.dataset.v === key);
+  }));
+}
+
+function act(a, id) {
+  if (a === 'open') openDlg(id);
+  if (a === 'del') {
+    const g = sigOf(id); g.img = null; g.R = newR();
+    if (S.variant === 'B' && !SLOTS[S.n].some((s) => sigOf(s.id).img)) { S.bR = newR(); S.noKeep = true; }
+    render();
+  }
+}
+
+/* ---- popup TTD ---- */
+function openDlg(id) {
+  const g = sigOf(id), s = slotName(id);
+  D = { id, gated: S.variant === 'A' && gated(id), R: JSON.parse(JSON.stringify(g.R)), strokes: [], err: '', uploading: false };
+  const rb = D.gated ? '<div id="drb"></div><div style="height:8px"></div>' : '';
+  $('dlg').innerHTML = `<div class="hd"><h1>Tanda Tangan</h1><p>${s.who}</p></div>
+  <div class="bd">${rb}<canvas id="cv"></canvas><div class="er"><p id="derr" role="alert"></p><button id="dclr">Hapus</button></div></div>
+  <div class="ft"><button class="sec" id="dcancel">Batal</button><button id="dsave">Simpan</button></div>`;
+  $('ov').classList.add('show');
+  if (D.gated) mountRead('d', D.R, updDlg);
+  const cv = $('cv'); let cur = null;
+  const pt = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+  cv.addEventListener('pointerdown', (e) => { if (D.uploading) return; e.preventDefault(); cv.setPointerCapture(e.pointerId); D.err = ''; cur = [pt(e)]; D.strokes.push(cur); paint(); updDlg(); });
+  cv.addEventListener('pointermove', (e) => { if (!cur) return; cur.push(pt(e)); paint(); });
+  cv.addEventListener('pointerup', () => { cur = null; }); cv.addEventListener('pointercancel', () => { cur = null; });
+  $('dclr').onclick = () => { D.strokes = []; D.err = ''; paint(); updDlg(); };
+  $('dcancel').onclick = closeDlg; $('dsave').onclick = saveDlg;
+  paint(); updDlg();
+}
+function paint() {
+  const cv = $('cv'); if (!cv) return;
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.round(r.width), h = Math.round(r.height);
+  if (!w) return;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h);
+  c.strokeStyle = '#111'; c.lineWidth = 2.2; c.lineCap = 'round'; c.lineJoin = 'round';
+  D.strokes.forEach((st) => { c.beginPath(); st.forEach(([x, y], i) => (i ? c.lineTo(x * w, y * h) : c.moveTo(x * w, y * h))); if (st.length === 1) c.lineTo(st[0][0] * w + .1, st[0][1] * h); c.stroke(); });
+}
+function updDlg() {
+  if (!D) return;
+  $('derr').textContent = D.err;
+  const lock = D.gated && !isOk(D.R);
+  $('dsave').disabled = D.uploading || lock;
+  $('dsave').innerHTML = D.uploading ? '<span class="spin"></span>Mengunggah…' : 'Simpan';
+  $('dcancel').disabled = D.uploading; $('dclr').disabled = D.uploading;
+}
+function closeDlg() { clearTimeout(timer); D = null; $('ov').classList.remove('show'); $('dlg').innerHTML = ''; render(); }
+function saveDlg(hold) {
+  if (!D || D.uploading) return;
+  if (!D.strokes.length) { D.err = 'Tanda tangan wajib diisi'; updDlg(); return; }
+  D.uploading = true; updDlg();
+  timer = setTimeout(() => { // simulasi upload ke POST /file/upload
+    const g = sigOf(D.id); g.img = $('cv').toDataURL('image/png'); if (D.gated) g.R = D.R;
+    closeDlg();
+  }, hold === 'hold' ? 4000 : 1200);
+}
+
+/* ---- dummy tanda tangan ---- */
+const SQUIGGLE = [[.1, .6], [.2, .3], [.3, .7], [.4, .35], [.5, .65], [.62, .3], [.75, .7], [.9, .4]];
+function dummyImg() {
+  const c = document.createElement('canvas'); c.width = 400; c.height = 120; const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 400, 120); x.strokeStyle = '#111'; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath();
+  SQUIGGLE.forEach(([a, b], i) => (i ? x.lineTo(a * 400, b * 120) : x.moveTo(a * 400, b * 120))); x.stroke(); return c.toDataURL('image/png');
+}
+/* ---- lompat state (slot CPB) ---- */
+function jump(j) {
+  clearTimeout(timer); D = null; $('ov').classList.remove('show');
+  if (j === 'reset') { S.sig = {}; S.bR = newR(); return render(); }
+  const id = 'cpb', A = S.variant === 'A', ks = keysNow();
+  if (j === 'half' && ks.length < 2) j = 'nocheck'; // 1 dari 2 hanya ada di mode tab
+  const g = (S.sig[id] = { img: null, R: newR() }), R = A ? g.R : (S.bR = newR());
+  if (j === 'saved') { g.img = dummyImg(); [g.R, S.bR].forEach((r) => ['all', 'sp', 'pi'].forEach((k) => (r[k] = { read: true, agreed: true }))); return render(); }
+  const agree = j === 'empty' || j === 'uploading';
+  ks.forEach((k) => (R[k] = { read: j !== 'unread', agreed: agree }));
+  if (j === 'half') { R[ks[0]].agreed = true; R.tab = ks[1]; } // tab 1 selesai, tab 2 sudah dibaca tapi belum dicentang
+  if (!A) { render(); $('bbox').scrollIntoView({ block: 'center' }); if (!agree) return; }
+  openDlg(id);
+  if (j === 'unread' || j === 'read') return;
+  if (!agree) { D.strokes = [SQUIGGLE.slice()]; paint(); updDlg(); } // nocheck, half
+  if (j === 'empty') saveDlg();
+  if (j === 'uploading') { D.strokes = [SQUIGGLE.slice()]; paint(); saveDlg('hold'); }
+}
+
+document.querySelectorAll('.jump button').forEach((b) => b.addEventListener('click', () => jump(b.dataset.j)));
+const tg = (id, fn) => $(id).querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { clearTimeout(timer); D = null; $('ov').classList.remove('show'); fn(b.dataset.v); render(); }));
+tg('tgVar', (v) => { S.variant = v; }); tg('tgSlot', (v) => { S.n = +v; }); tg('tgScope', (v) => { S.scope = v; }); tg('tgTab', (v) => { S.tabs = v === '2'; });
+window.addEventListener('resize', paint);
+render();
+</script>
+</body>
+</html>
