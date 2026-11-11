@@ -224,10 +224,8 @@ function render() {
   <div class="rec"><b>Rekomendasi: Lolos Verval Lapangan</b><div class="hint">Bagian A–E diringkas (dummy). Prototype fokus pada Bagian F.</div></div>
   <div class="card"><h3>Bagian F — Pernyataan CPB &amp; Berita Acara</h3>`;
   if (S.variant === 'B') {
-    h += `<div class="callout green" style="margin-bottom:8px">Menggantikan kartu pledge Pergub 34/2021 (satu kalimat). Tidak ada dua pakta.</div><div id="brb"></div>
+    h += `<div id="brb"></div>
     <div class="hint" style="margin:6px 0 12px">Berlaku untuk: ${S.scope === 'cpb' ? 'tombol tanda tangan CPB saja' : 'semua penandatangan'}. Popup tanda tangan = kanvas saja.</div>`;
-  } else {
-    h += `<div class="callout green">Surat Pernyataan &amp; Pakta Integritas (Format D/E, menggantikan pledge Pergub 34/2021) dibaca dan disetujui <b>di dalam popup tanda tangan</b> ${S.scope === 'cpb' ? '(slot CPB saja)' : '(semua slot)'}.</div>`;
   }
   h += `<div class="sig" style="border:1px dashed #D1D5DB;border-radius:8px;padding:12px"><h4>Diperiksa oleh: Koordinator Fasilitator Kab.</h4><div class="who" style="margin-bottom:0">Dinas Perumahan dan Kawasan Permukiman</div><div style="margin-top:8px;font-size:12px;font-weight:700;color:#B45309">Menunggu</div></div>`;
   slots.forEach((s) => {
