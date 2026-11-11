@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — Label Duplikat NIK di Detail Usulan</title>
+<meta name="proto:desc" content="Label duplikat NIK + list usulan lain di detail usulan, 2 varian posisi">
+<meta name="proto:date" content="2026-11-11">
+<meta name="proto:tags" content="cms,detail,duplikat,nik">
+<style>
+  :root {
+    --green:#069550; --green-jds:#10A760; --green-600:#16A75C; --green-50:#E8F6EE;
+    --bg:#EFF2F3; --border:#E5E7EB; --text:#111827; --muted:#6B7280;
+    --red:#DD5E5E; --red-50:#FDECEC; --orange:#FF7500; --orange-50:#FFF1E0;
+    --gray:#6B7280; --gray-50:#F9FAFB;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); font-family:Lato,Roboto,system-ui,sans-serif; color:var(--text); font-size:14px; }
+  [hidden] { display:none !important; }
+  .proto { background:#1f2937; color:#e5e7eb; font-size:12px; padding:8px 16px; display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; position:sticky; top:0; z-index:30; }
+  .proto b { color:#fff; }
+  .proto select { background:#374151; color:#e5e7eb; border:1px solid #6b7280; border-radius:4px; font-size:12px; padding:2px 6px; }
+  .seg { display:inline-flex; border:1px solid #6b7280; border-radius:6px; overflow:hidden; }
+  .seg button { background:#374151; color:#e5e7eb; border:0; padding:4px 12px; font:inherit; cursor:pointer; }
+  .seg button[aria-pressed="true"] { background:var(--green); color:#fff; font-weight:700; }
+  .seg button:focus-visible, .proto select:focus-visible { outline:2px solid #fff; outline-offset:1px; }
+
+  .main { padding:20px 24px 48px; max-width:1200px; margin:0 auto; }
+  .crumb { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  h1 { margin:0 0 4px; font-size:20px; }
+  .btn { border:1px solid var(--green); color:var(--green); background:#fff; border-radius:8px; padding:6px 14px; font-size:14px; font-weight:700; font-family:inherit; margin:16px 0 32px; }
+
+  /* meniru: space-y-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm */
+  .card { background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,.05); overflow:hidden; }
+  .card > section { border-bottom:1px solid var(--border); }
+  .card > section + section { margin-top:32px; }
+  .sh { background:var(--green-jds); color:#fff; font-size:14px; font-weight:600; padding:10px 16px; }
+  .sh.flex { display:flex; justify-content:space-between; }
+  .cols { display:grid; grid-template-columns:repeat(3,1fr); }
+  .cols > div + div { border-left:1px solid #F3F4F6; }
+  .ct { border-bottom:1px solid #F3F4F6; padding:10px 24px; font-size:12px; font-weight:600; text-transform:uppercase; color:var(--muted); }
+  .kv { display:flex; border-bottom:1px solid #F3F4F6; padding:12px 24px; align-items:center; }
+  .kv:last-child { border-bottom:0; }
+  .kv > :first-child { width:160px; flex-shrink:0; font-weight:600; }
+  .kv > :last-child { color:#374151; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#FF7500; margin-right:8px; }
+  .skeleton { padding:12px 24px; color:#9CA3AF; font-style:italic; }
+  @media (max-width:800px){ .cols { grid-template-columns:1fr; } .cols > div + div { border-left:0; } }
+
+  table { width:100%; border-collapse:collapse; }
+  th { background:var(--gray-50); border-bottom:1px solid var(--border); padding:12px 24px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  th.c3 { border-left:1px solid var(--border); }
+  th .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .reveal { background:var(--green-jds); color:#fff; border:0; border-radius:4px; padding:4px 12px; font-size:11px; font-weight:600; text-transform:none; letter-spacing:0; }
+  td { padding:12px 24px; font-size:14px; color:#374151; border-bottom:1px solid #F3F4F6; vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  td.f { width:180px; font-weight:600; color:var(--text); }
+  td.c3 { border-left:1px solid var(--border); }
+  .between { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .src { font-size:10px; font-weight:600; padding:2px 6px; border-radius:4px; border:1px solid #E9D5FF; background:#FAF5FF; color:#9333EA; }
+
+  .nikrow { display:inline-flex; align-items:center; flex-wrap:wrap; gap:6px 8px; position:relative; }
+  .dup { display:inline-flex; align-items:center; gap:4px; border:1px solid; border-radius:999px; padding:1px 10px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+  .dup:focus-visible, .idlink:focus-visible, .more:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
+  .dup.red { color:var(--red); background:var(--red-50); border-color:var(--red); }
+  .dup.orange { color:#C25A00; background:var(--orange-50); border-color:var(--orange); }
+  .dup.gray { color:var(--gray); background:#F3F4F6; border-color:#C9CED6; }
+
+  .st { display:inline-block; border-radius:999px; padding:1px 9px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .st.aktif { background:var(--green-50); color:var(--green); }
+  .st.dibatalkan { background:#F3F4F6; color:var(--gray); border:1px solid #D5D9E0; }
+  .st.ditolak { background:var(--red-50); color:var(--red); }
+  .st.tolak-sanggah { background:var(--orange-50); color:#C25A00; }
+
+  .dl-list { list-style:none; margin:0; padding:0; }
+  .dl-list li { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:8px 0; border-top:1px solid #F3F4F6; }
+  .dl-list li:first-child { border-top:0; }
+  .idlink { color:#083461; font-weight:700; text-decoration:underline; }
+  .tgl { color:var(--muted); font-size:12px; white-space:nowrap; }
+  .more { border:0; background:none; color:var(--green); font:inherit; font-size:12px; font-weight:600; cursor:pointer; padding:6px 0 0; text-decoration:underline; }
+  .scroll { max-height:220px; overflow:auto; }
+  .pop-head { font-size:12px; font-weight:700; color:var(--muted); margin:0 0 4px; }
+
+  .pop { position:absolute; top:calc(100% + 8px); left:0; z-index:20; width:min(380px,80vw); background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(17,24,39,.18); padding:12px 14px; font-weight:400; }
+  .pop::before { content:""; position:absolute; top:-6px; left:24px; width:10px; height:10px; background:#fff; border-left:1px solid var(--border); border-top:1px solid var(--border); transform:rotate(45deg); }
+
+  .dupbody { padding:16px 24px; }
+  .note { font-size:12px; color:var(--muted); margin:0 0 6px; }
+</style>
+</head>
+<body>
+
+<div class="proto">
+  <b>PROTOTYPE</b>
+  <span>Detail Usulan → label duplikat NIK</span>
+  <span>Varian:
+    <span class="seg" id="viewSeg" role="group" aria-label="Varian">
+      <button data-v="A" aria-pressed="true">Varian A: badge + popover</button>
+      <button data-v="B" aria-pressed="false">Varian B: badge + card</button>
+    </span>
+  </span>
+  <label>Skenario data:
+    <select id="scn">
+      <option value="few">2 usulan lain (campur status)</option>
+      <option value="many" selected>8 usulan lain (banyak, ada "lihat semua")</option>
+      <option value="cancel">1 usulan lain (dibatalkan saja)</option>
+      <option value="none">Tidak ada duplikat</option>
+    </select>
+  </label>
+</div>
+
+<div class="main" id="root"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LIMIT = 3;
+// Dummy. NIK diawali 9999 = fiktif.
+const CUR = { id:'SWW202611030001', tgl:'03 Nov 2026', nik:'9999000000000001', nikMask:'9999********0001', kk:'9999********0002', nama:'C****** P******* A' };
+const ALL = [
+  { id:'SWW202611080002', st:'aktif',         tgl:'2026-11-08' },
+  { id:'SWW202610210007', st:'dibatalkan',    tgl:'2026-10-21' },
+  { id:'SWW202610020003', st:'ditolak',       tgl:'2026-10-02' },
+  { id:'SWW202609140011', st:'tolak sanggah', tgl:'2026-09-14' },
+  { id:'SWW202609010004', st:'dibatalkan',    tgl:'2026-09-01' },
+  { id:'SWW202608190009', st:'dibatalkan',    tgl:'2026-08-19' },
+  { id:'SWW202608050002', st:'ditolak',       tgl:'2026-08-05' },
+  { id:'SWW202607220006', st:'dibatalkan',    tgl:'2026-07-22' },
+];
+const SCN = { few:[ALL[0],ALL[1]], many:ALL, cancel:[ALL[1]], none:[] };
+const STL = { 'aktif':'Aktif', 'dibatalkan':'Dibatalkan', 'ditolak':'Ditolak', 'tolak sanggah':'Tolak Sanggah' };
+const cls = s => s.replace(' ','-');
+const fmt = iso => new Date(iso+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+const tone = l => l.some(x=>x.st==='ditolak'||x.st==='tolak sanggah') ? 'red' : l.some(x=>x.st==='aktif') ? 'orange' : 'gray';
+let variant = 'A';
+const state = { pop:false, all:false };
+
+function listHtml(list){
+  const rows = (state.all ? list : list.slice(0, LIMIT)).map(x =>
+    `<li><a class="idlink" href="#" data-dummy>${x.id}</a><span class="st ${cls(x.st)}">${STL[x.st]}</span><span class="tgl">${fmt(x.tgl)}</span></li>`).join('');
+  const more = list.length > LIMIT
+    ? `<button class="more" data-more type="button">${state.all ? 'Ringkas' : `Lihat semua (${list.length})`}</button>` : '';
+  return `<ul class="dl-list ${state.all ? 'scroll' : ''}">${rows}</ul>${more}`;
+}
+
+function render(){
+  const list = SCN[$('scn').value].slice().sort((a,b)=>b.tgl.localeCompare(a.tgl));
+  const n = list.length;
+  const aria = variant==='A' ? `aria-expanded="${state.pop}" aria-controls="pop"` : '';
+  const badge = n ? `<button class="dup ${tone(list)}" type="button" data-badge ${aria} aria-label="Duplikat NIK, ${n} usulan lain">&#9888; Duplikat (${n})</button>` : '';
+  const pop = variant==='A' && n ? `<div class="pop" id="pop" role="dialog" aria-label="Usulan lain dengan NIK sama" ${state.pop?'':'hidden'}>
+      <p class="pop-head">Usulan lain dengan NIK sama (${n})</p>${listHtml(list)}</div>` : '';
+  const sec = variant==='B' && n ? `<section id="dupSec"><div class="sh flex"><span>Usulan Lain dengan NIK Sama</span><span>${n} usulan</span></div>
+      <div class="dupbody"><p class="note">NIK pengusul ini juga dipakai pada usulan berikut. Urut tanggal terbaru.</p>${listHtml(list)}</div></section>` : '';
+  const vrow = (f, a, b) => `<tr><td class="f">${f}</td><td>${a}</td><td class="c3"><div class="between"><span>${b}</span><span class="src">SATATA</span></div></td></tr>`;
+  $('root').innerHTML = `
+    <div class="crumb">Aduan › Imah Aing › Daftar Usulan › Detail Usulan</div>
+    <h1>Detail Usulan</h1>
+    <button class="btn" type="button">&larr; Kembali</button>
+    <div class="card">
+      <section>
+        <div class="sh">Informasi Umum</div>
+        <div class="cols">
+          <div>
+            <div class="ct">Detail Usulan</div>
+            <div class="kv"><span>ID Usulan</span><span>${CUR.id}</span></div>
+            <div class="kv"><span>Tanggal Usulan Masuk</span><span>${CUR.tgl}</span></div>
+            <div class="kv"><span>Status</span><span><span class="dot"></span>Menunggu Verifikasi Data</span></div>
+            <div class="kv"><span>Program</span><span>Belum ditentukan</span></div>
+          </div>
+          <div><div class="ct">Rincian Skor</div><div class="skeleton">(tidak digambar)</div></div>
+          <div><div class="ct">Skor Total</div><div class="skeleton">(tidak digambar)</div></div>
+        </div>
+      </section>
+      <section>
+        <div class="sh">Data Validasi Usulan</div>
+        <table>
+          <thead><tr><th style="width:180px">Field</th><th>Data Input</th>
+            <th class="c3"><div class="row"><span>Data Validasi</span><button class="reveal" type="button">Lihat Data</button></div></th></tr></thead>
+          <tbody>
+            <tr><td class="f">NIK</td><td><span class="nikrow">${CUR.nikMask}${badge}${pop}</span></td>
+              <td class="c3"><div class="between"><span>${CUR.nikMask}</span><span class="src">SATATA</span></div></td></tr>
+            ${vrow('No KK', CUR.kk, CUR.kk)}
+            ${vrow('Nama Lengkap', CUR.nama, CUR.nama)}
+            <tr><td class="f">Kabupaten / Kota</td><td>Kab. Contoh</td><td class="c3"><div class="between"><span>Kab. Contoh</span><span class="src">SATATA</span></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+      ${sec}
+      <section><div class="sh">Integrasi Data Eksternal, Lokasi, Lampiran, Riwayat Bantuan</div><div class="skeleton">(tidak digambar)</div></section>
+    </div>`;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('[data-dummy]')) { e.preventDefault(); return; }
+  if (t.closest('[data-more]')) { state.all = !state.all; render(); return; }
+  if (t.closest('[data-badge]')) {
+    if (variant === 'A') { state.pop = !state.pop; render(); document.querySelector('[data-badge]').focus(); }
+    else $('dupSec').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  if (state.pop && !t.closest('.pop')) { state.pop = false; render(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && state.pop) { state.pop = false; render(); document.querySelector('[data-badge]')?.focus(); }
+});
+$('scn').addEventListener('change', () => { state.pop = false; state.all = false; render(); });
+$('viewSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#viewSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  variant = b.dataset.v; state.pop = false; state.all = false; render();
+});
+render();
+</script>
+</body>
+</html>
